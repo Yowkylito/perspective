@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Ivory ground, not ink. The brand's primary surface is the light one, and a
+      near-white tile holds contrast against a dark wallpaper as well as a light
+      one — a black tile would sink into the former. Among saturated launcher
+      icons, the restraint is the distinction.
+    -->
+    <color name="ic_launcher_background">#FFFDED</color>
+</resources>

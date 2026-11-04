@@ -187,6 +187,32 @@ capital H, `ResizeMode.ScaleToBounds` with a capital S. The live developer.andro
 reference documents 1.12/1.13 and **will not compile here**. Check the version
 before copying a sample.
 
+## Icon
+
+A Courier Prime Bold `P`, **extracted from the shipped TTF** rather than redrawn,
+so the icon is the brand's typeface rather than an approximation of it. The
+VectorDrawable carries the font's own 2048upm coordinates untouched; a group
+transform flips Y and scales to dp.
+
+Not the wordmark: `PERSPECT1VE` inside its rule is eleven tracked characters and
+is illegible at 48dp. Not the mirrored E, though it is the brand's signature
+move: an icon is seen without context hundreds of times and its only job is
+recognition, and a lone reversed E risks reading as an error or a 3. Cleverness
+that costs legibility fails the same test the motion system is held to.
+
+Ivory ground, ink glyph — the brand's primary surface, and a near-white tile
+holds contrast against dark wallpaper where a black one would sink. Geometry:
+cap height 46dp centred at (54,54) in the 108dp viewport, comfortably inside the
+66dp safe zone. A `monochrome` layer ships for Android 13+ themed icons; a
+monochrome brand gets that for free.
+
+minSdk 26, so `mipmap-anydpi-v26` covers every device and there are no legacy PNG
+density buckets to maintain.
+
+**Still needed for release:** a flat 512x512 PNG for the Play listing, which an
+adaptive icon cannot supply. Generate it from the same path (Android Studio's
+Image Asset tool, or any SVG renderer) — do not redraw the glyph.
+
 ## Status
 
 Brand system complete and a working two-screen scaffold on top of it.
