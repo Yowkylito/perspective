@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import com.perspective.app.ui.theme.Motion
 import com.perspective.app.ui.theme.Space
 
 /**
@@ -36,7 +37,7 @@ fun Accordion(
 ) {
     var open by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.animateContentSize()) {
+    Column(modifier = modifier.animateContentSize(animationSpec = Motion.standard())) {
         HorizontalDivider(
             thickness = Space.Hairline,
             color = MaterialTheme.colorScheme.outlineVariant,

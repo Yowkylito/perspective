@@ -1,5 +1,6 @@
 package com.perspective.app.ui.product
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
@@ -31,8 +33,10 @@ import com.perspective.app.data.Product
 import com.perspective.app.data.SizeOption
 import com.perspective.app.data.asPrice
 import com.perspective.app.ui.components.Accordion
+import com.perspective.app.ui.productImage
 import com.perspective.app.ui.components.ImagePlate
 import com.perspective.app.ui.components.PerspectiveButton
+import com.perspective.app.ui.theme.Motion
 import com.perspective.app.ui.theme.Ratio
 import com.perspective.app.ui.theme.Space
 
@@ -60,8 +64,14 @@ fun ProductDetailScreen(
             .verticalScroll(rememberScrollState()),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            HorizontalPager(state = pager, modifier = Modifier.fillMaxWidth()) {
-                ImagePlate(ratio = Ratio.Product)
+            HorizontalPager(state = pager, modifier = Modifier.fillMaxWidth()) { page ->
+                // Only page 0 is the shared element -- it is the image the tile
+                // showed. Marking every page would give the key several matches
+                // and the transition would pick one arbitrarily.
+                ImagePlate(
+                    ratio = Ratio.Product,
+                    modifier = if (page == 0) Modifier.productImage(product.id) else Modifier,
+                )
             }
             // An "n/N" counter, not a dot row: it states the count exactly and
             // stays legible however many images a product has.
@@ -159,11 +169,20 @@ private fun SizeRow(
         sizes.forEach { size ->
             val isSelected = size.label == selected
             val ink = MaterialTheme.colorScheme.onBackground
+            // The rule fades in rather than snapping. It explains WHICH size the
+            // tap landed on -- a purpose -- and 200ms is short enough to read as
+            // responsiveness rather than as an effect.
+            val rule by animateColorAsState(
+                targetValue = when {
+                    isSelected -> ink
+                    else -> Color.Transparent
+                },
+                animationSpec = Motion.quick(),
+                label = "sizeRule",
+            )
             Box(
                 modifier = Modifier
-                    .then(
-                        if (isSelected) Modifier.border(Space.Hairline, ink) else Modifier,
-                    )
+                    .border(Space.Hairline, rule)
                     .then(
                         if (size.available) {
                             Modifier.clickable { onSelect(size.label) }

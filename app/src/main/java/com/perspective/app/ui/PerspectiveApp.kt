@@ -1,5 +1,9 @@
 package com.perspective.app.ui
 
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +18,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -26,6 +31,7 @@ import com.perspective.app.data.SampleCatalogue
 import com.perspective.app.ui.brand.Wordmark
 import com.perspective.app.ui.catalog.ProductWallScreen
 import com.perspective.app.ui.product.ProductDetailScreen
+import com.perspective.app.ui.theme.Motion
 import com.perspective.app.ui.theme.Space
 
 private const val RouteWall = "wall"
@@ -35,22 +41,41 @@ private const val RouteProduct = "product/{id}"
 fun PerspectiveApp() {
     val nav = rememberNavController()
 
-    NavHost(navController = nav, startDestination = RouteWall) {
-        composable(RouteWall) {
-            Chrome(leading = "MENU", onLeading = {}) {
-                ProductWallScreen(
-                    onProductClick = { nav.navigate("product/${it.id}") },
-                )
-            }
-        }
-        composable(
-            RouteProduct,
-            arguments = listOf(navArgument("id") { type = NavType.StringType }),
-        ) { entry ->
-            val product = SampleCatalogue.byId(entry.arguments?.getString("id").orEmpty())
-            Chrome(leading = "BACK", onLeading = { nav.popBackStack() }) {
-                if (product != null) {
-                    ProductDetailScreen(product = product)
+    // SharedTransitionLayout must wrap the NavHost: it has to be a common
+    // ancestor of both the tile and the detail hero for them to match.
+    SharedTransitionLayout {
+        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+            NavHost(navController = nav, startDestination = RouteWall) {
+                composable(
+                    RouteWall,
+                    // The non-shared content fades while the image travels. That
+                    // is the whole shape of the transition: one element moves and
+                    // everything else gets out of its way.
+                    exitTransition = { fadeOut(tween(Motion.Quick, easing = Motion.Accelerate)) },
+                    popEnterTransition = { fadeIn(tween(Motion.Standard, easing = Motion.Decelerate)) },
+                ) {
+                    CompositionLocalProvider(LocalAnimatedVisibilityScope provides this) {
+                        Chrome(leading = "MENU", onLeading = {}) {
+                            ProductWallScreen(
+                                onProductClick = { nav.navigate("product/${it.id}") },
+                            )
+                        }
+                    }
+                }
+                composable(
+                    RouteProduct,
+                    arguments = listOf(navArgument("id") { type = NavType.StringType }),
+                    enterTransition = { fadeIn(tween(Motion.Standard, easing = Motion.Decelerate)) },
+                    popExitTransition = { fadeOut(tween(Motion.Quick, easing = Motion.Accelerate)) },
+                ) { entry ->
+                    val product = SampleCatalogue.byId(entry.arguments?.getString("id").orEmpty())
+                    CompositionLocalProvider(LocalAnimatedVisibilityScope provides this) {
+                        Chrome(leading = "BACK", onLeading = { nav.popBackStack() }) {
+                            if (product != null) {
+                                ProductDetailScreen(product = product)
+                            }
+                        }
+                    }
                 }
             }
         }

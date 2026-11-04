@@ -30,7 +30,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin {
-        compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            // Shared-element transitions are still experimental on Compose
+            // animation 1.9.3 (the version compose-bom 2025.10.00 pins). They
+            // stabilise in 1.10.0; drop this when the BOM moves past it.
+            freeCompilerArgs.add("-opt-in=androidx.compose.animation.ExperimentalSharedTransitionApi")
+        }
     }
     buildFeatures { compose = true }
 }

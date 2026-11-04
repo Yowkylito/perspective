@@ -2,6 +2,21 @@
 
 Premium commerce app. Jetpack Compose, single module for now.
 
+## Positioning
+
+Perspective sells clothing. It is **premium, not luxurious** — and the distinction
+is not decoration, it decides values.
+
+Luxury signals through indulgence: slow languid motion, ornament, elements that
+exist to be admired. Premium signals through precision: every element earns its
+place by doing a job.
+
+**The test, applied before anything is added:** name the purpose it serves —
+explaining a state change, a spatial relationship, hierarchy, or legibility. If
+the only answer is "it looks expensive", cut it.
+
+Everything below follows from this.
+
 ## Brand
 
 The wordmark is `PERSPECT1VE`: all caps in a monospaced face, inside a thin
@@ -126,6 +141,51 @@ safe optional.
 **Open question, deliberately unanswered:** every site measured is a website, so
 there is no verified evidence on whether boutique *apps* avoid bottom tab bars.
 Treat drawer-vs-tabs as undecided rather than settled.
+
+## Motion
+
+Premium motion is precise and confident; luxurious motion is slow and languid.
+Everything sits in a 120-360ms band on Material 3's emphasized curves, decelerates
+into rest, and never bounces. **No springs with visible overshoot** — that reads
+playful, which is a different brand.
+
+`Motion.kt` holds the tokens. There is no Material motion-token layer to lean on:
+`MotionScheme` arrives in material3 1.5.0-beta02 and the BOM pins **1.4.0**, so
+these are hand-rolled on purpose, not from ignorance of the Material API.
+
+**The test, before adding any animation:** name what it explains — a state change,
+a spatial relationship, hierarchy, or where something came from. "It looks
+expensive" is not a purpose.
+
+Two things that failed the test and are deliberately absent:
+- **Staggered tile entrance on the wall.** A lazy grid recycles, so it re-fires
+  every time a row scrolls back. Motion with nothing to say, repeated.
+- **Parallax between PDP pager images.** Defensible once there is photography;
+  against flat placeholder plates it is a visual no-op that cannot be verified.
+
+What is present, and what each one earns its place by doing:
+- **Shared element, wall -> detail.** The only use of `Motion.Considered`. Shows
+  that the thing you tapped became the thing you are looking at; without it the
+  navigation is a cut and the eye has to find the product again.
+- **Nav crossfade.** Non-shared content gets out of the travelling image's way.
+- **Size rule fade-in.** Marks which size the tap landed on.
+- **CTA label crossfade.** The label changes meaning; a hard swap reads as a glitch.
+- **Accordion expansion.** Shows that content came from the row you pressed.
+
+**Do not hand-roll reduced-motion duration scaling.** Compose reads
+`Settings.Global.ANIMATOR_DURATION_SCALE` itself and observes it live, so
+animations already snap when the user disables them — a second check would
+double-apply. Read the setting only for *structural* choices the scale cannot
+express (swapping a shared element for a plain crossfade, say). The same
+mechanism makes transitions easy to inspect: `adb shell settings put global
+animator_duration_scale 10` slows them for screenshotting.
+
+**Shared-element API is version-sensitive.** On Compose animation 1.9.3 it is
+still `@ExperimentalSharedTransitionApi` (opted in once in `app/build.gradle.kts`)
+and several parameters have pre-rename spellings — `placeHolderSize` with a
+capital H, `ResizeMode.ScaleToBounds` with a capital S. The live developer.android
+reference documents 1.12/1.13 and **will not compile here**. Check the version
+before copying a sample.
 
 ## Status
 

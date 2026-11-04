@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import com.perspective.app.data.Product
+import com.perspective.app.ui.productImage
 import com.perspective.app.data.asPrice
 import com.perspective.app.ui.theme.Space
 
@@ -41,7 +42,7 @@ fun ProductTile(
                 contentDescription = "${product.name}, ${product.price.asPrice()}"
             },
     ) {
-        ImagePlate(tone = tone)
+        ImagePlate(tone = tone, modifier = Modifier.productImage(product.id))
         Spacer(Modifier.height(Space.LabelGap))
         Column(modifier = Modifier.padding(horizontal = Space.BleedLabelInset)) {
             Text(

@@ -1,5 +1,6 @@
 package com.perspective.app.ui.components
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.perspective.app.ui.theme.Motion
 import com.perspective.app.ui.theme.Space
 
 /**
@@ -53,6 +55,10 @@ fun PerspectiveButton(
             .fillMaxWidth()
             .height(48.dp),
     ) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge)
+        // The label changes meaning when a size is chosen. Cross-fading marks
+        // that as a state change; a hard swap reads as a glitch at this size.
+        Crossfade(targetState = label, animationSpec = Motion.quick(), label = "cta") {
+            Text(text = it, style = MaterialTheme.typography.labelLarge)
+        }
     }
 }
