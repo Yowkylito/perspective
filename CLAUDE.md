@@ -189,29 +189,35 @@ before copying a sample.
 
 ## Icon
 
-A Courier Prime Bold `P`, **extracted from the shipped TTF** rather than redrawn,
-so the icon is the brand's typeface rather than an approximation of it. The
-VectorDrawable carries the font's own 2048upm coordinates untouched; a group
-transform flips Y and scales to dp.
+The wordmark in its rule — the brand's actual logo, not a monogram derived from
+it. Every glyph is extracted from the shipped `CourierPrime-Bold.ttf` and placed
+by transform, mirrored Es included, using the same construction as `Wordmark.kt`
+so the icon and the in-app mark cannot drift apart.
 
-Not the wordmark: `PERSPECT1VE` inside its rule is eleven tracked characters and
-is illegible at 48dp. Not the mirrored E, though it is the brand's signature
-move: an icon is seen without context hundreds of times and its only job is
-recognition, and a lone reversed E risks reading as an error or a 3. Cleverness
-that costs legibility fails the same test the motion system is held to.
+**Why not a single letter.** The first attempt was a Courier `P`. It was perfectly
+legible and wrong: Courier is a typewriter face, so a lone serifed letter reads as
+a document or a writing app rather than apparel. Premium clothing apps almost
+universally put the whole wordmark on a plain tile — The Row, Aesop, SSENSE,
+Jil Sander — and accept that the letters are small, because the tile is the
+recognition cue, not the reading.
 
-Ivory ground, ink glyph — the brand's primary surface, and a near-white tile
-holds contrast against dark wallpaper where a black one would sink. Geometry:
-cap height 46dp centred at (54,54) in the 108dp viewport, comfortably inside the
-66dp safe zone. A `monochrome` layer ships for Android 13+ themed icons; a
-monochrome brand gets that for free.
+**The honest tradeoff.** Eleven monospaced characters in a 48dp icon cannot be
+read. Cap height lands at 4.3dp. At launcher size it registers as a framed
+word-block, which is the intended effect and is what the reference brands ship;
+it is not an accident to be "fixed" by enlarging the type, which would only push
+the rule outside the mask.
+
+Geometry: rule 64x18dp centred in the 108dp viewport, so its furthest corner sits
+33.2dp from centre against the mask's 36dp radius. Ivory ground, ink glyph —
+the brand's primary surface, and a near-white tile holds contrast against dark
+wallpaper where a black one would sink. A `monochrome` layer ships for Android 13+
+themed icons.
 
 minSdk 26, so `mipmap-anydpi-v26` covers every device and there are no legacy PNG
 density buckets to maintain.
 
 **Still needed for release:** a flat 512x512 PNG for the Play listing, which an
-adaptive icon cannot supply. Generate it from the same path (Android Studio's
-Image Asset tool, or any SVG renderer) — do not redraw the glyph.
+adaptive icon cannot supply. Generate from the same paths — do not redraw.
 
 ## Status
 
