@@ -33,6 +33,7 @@ import com.perspective.app.data.Product
 import com.perspective.app.data.SizeOption
 import com.perspective.app.data.asPrice
 import com.perspective.app.ui.components.Accordion
+import com.perspective.app.ui.components.FrameCounter
 import com.perspective.app.ui.productImage
 import com.perspective.app.ui.components.ImagePlate
 import com.perspective.app.ui.components.PerspectiveButton
@@ -69,20 +70,12 @@ fun ProductDetailScreen(
                 // showed. Marking every page would give the key several matches
                 // and the transition would pick one arbitrarily.
                 ImagePlate(
+                    model = product.images[page],
                     ratio = Ratio.Product,
                     modifier = if (page == 0) Modifier.productImage(product.id) else Modifier,
                 )
             }
-            // An "n/N" counter, not a dot row: it states the count exactly and
-            // stays legible however many images a product has.
-            Text(
-                text = "${pager.currentPage + 1}/${product.imageCount}",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(Space.Md),
-            )
+            FrameCounter(current = pager.currentPage + 1, total = product.imageCount)
         }
 
         Column(modifier = Modifier.padding(horizontal = Space.Gutter)) {

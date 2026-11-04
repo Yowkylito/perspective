@@ -12,8 +12,48 @@ data class Product(
     val price: Int,
     val sizes: List<SizeOption>,
     val description: String,
-    val imageCount: Int = 4,
-)
+    /** Stand-in photography; see [MockImages]. Empty until a catalogue fills it. */
+    val images: List<String> = emptyList(),
+) {
+    val imageCount: Int get() = images.size
+}
+
+/**
+ * Stand-in photography, taken from the brand's own Facebook catalogue and
+ * cropped to [com.perspective.app.ui.theme.Ratio.Product].
+ *
+ * These are campaign and lookbook frames, not per-product shots: there is no
+ * plate that belongs to any one garment, so a product's four pager frames are
+ * the seven plates rotated by its position. That is mock data standing in for a
+ * backend, not a scheme - delete this object the moment per-product photography
+ * exists, along with the assets under `assets/mock/`.
+ */
+object MockImages {
+    val plates: List<String> = (1..7).map { "file:///android_asset/mock/%02d.jpg".format(it) }
+
+    /**
+     * Campaign frames for the banner: street photography, no overlaid type.
+     *
+     * These carry the boxed typewriter wordmark on the garment itself rather
+     * than a caption set over the image, so the banner needs no words of its
+     * own and no scrim to fight. The studio posters they replaced moved to
+     * [collage], where their burned-in typography is the artwork rather than
+     * something to crop around.
+     */
+    val banners: List<String> = (1..3).map { "file:///android_asset/mock/banner/b%d.jpg".format(it) }
+
+    /**
+     * The three frames of the editorial block, in composition order: lead,
+     * then the two stacked stills. Order matters here in a way it does not
+     * for [plates] -- the first is cropped 3:4 for the lead cell and the
+     * other two 2:3 for the column beside it.
+     */
+    val collage: List<String> = (1..3).map { "file:///android_asset/mock/collage/c%d.jpg".format(it) }
+
+    /** Four frames for the product at [index], distinct within the product. */
+    fun forIndex(index: Int, frames: Int = 4): List<String> =
+        List(frames) { plates[(index + it) % plates.size] }
+}
 
 /** Price as a plain string. No currency-symbol styling, no decimals on whole amounts. */
 fun Int.asPrice(): String = "₱" + "%,d".format(this)
@@ -28,7 +68,7 @@ object SampleCatalogue {
             SizeOption(it, available = it !in unavailable)
         }
 
-    val items = listOf(
+    private val drafts = listOf(
         Product("01", "Boxed Rule Shirt", "Undyed Cotton", 7_450, sizes("XXS", "XL"),
             "Cut straight through the body with a half-placket and a single patch pocket. Woven from undyed long-staple cotton that softens with each wash."),
         Product("02", "Reversed Seam Trouser", "Ink", 9_900, sizes("XS"),
@@ -46,6 +86,9 @@ object SampleCatalogue {
         Product("08", "Kerning Scarf", "Bone", 4_900, listOf(SizeOption("One size")),
             "A long rectangular scarf in brushed lambswool, finished with hand-knotted fringing."),
     )
+
+    /** Plates are attached by position, so the wall never shows two neighbours alike. */
+    val items: List<Product> = drafts.mapIndexed { i, p -> p.copy(images = MockImages.forIndex(i)) }
 
     fun byId(id: String): Product? = items.firstOrNull { it.id == id }
 }

@@ -73,4 +73,17 @@ object Ratio {
     const val Product = 2f / 3f
     const val ProductSquarer = 5f / 7f
     const val Hero = 2f / 3f
+
+    /**
+     * Campaign banner: 3:4.
+     *
+     * Deliberately NOT [Product]. A banner at the product ratio reads as an
+     * oversized tile — one more thing in the catalogue rather than the frame
+     * around it. 3:4 also keeps the source campaign art nearly whole: the
+     * brand's own posters are 4:5, so this trims about 6% of width, where 2:3
+     * would take 17% and cut through their typography.
+     *
+     * Not Nike's 4:5 either, which is the hero ratio the brand rules rule out.
+     */
+    const val Banner = 3f / 4f
 }

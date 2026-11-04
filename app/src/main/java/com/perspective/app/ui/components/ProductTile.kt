@@ -33,7 +33,6 @@ fun ProductTile(
     product: Product,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    tone: Int = 0,
 ) {
     Column(
         modifier = modifier
@@ -42,7 +41,10 @@ fun ProductTile(
                 contentDescription = "${product.name}, ${product.price.asPrice()}"
             },
     ) {
-        ImagePlate(tone = tone, modifier = Modifier.productImage(product.id))
+        ImagePlate(
+            model = product.images.firstOrNull(),
+            modifier = Modifier.productImage(product.id),
+        )
         Spacer(Modifier.height(Space.LabelGap))
         Column(modifier = Modifier.padding(horizontal = Space.BleedLabelInset)) {
             Text(

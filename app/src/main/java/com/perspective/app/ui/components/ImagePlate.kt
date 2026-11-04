@@ -1,45 +1,42 @@
 package com.perspective.app.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.perspective.app.ui.theme.Ratio
 
 /**
- * Stands in for product photography until real assets exist.
+ * A single product image, held to [Ratio.Product].
  *
- * It reserves the exact final geometry, so swapping in an AsyncImage later
- * causes no layout shift - the ratio is fixed here, not inferred from the
- * bitmap. Flat fill, no shimmer: a loading animation on every tile of a wall is
- * noise, and the grid already reserves its space.
+ * The ratio is fixed HERE, not inferred from the bitmap, so the grid reserves
+ * the final geometry before the decode finishes and nothing shifts when it
+ * lands. That is also why there is no shimmer and no crossfade: the space is
+ * already correct, so a loading animation would be describing a change the
+ * layout never makes - and in a lazy grid it would re-fire on every recycle,
+ * which is the same objection that keeps staggered tile entrance out.
  *
- * [tone] exists ONLY because the wall runs a zero horizontal gutter. Two
- * identical flat plates butted together read as one continuous block, which
- * makes the scaffold impossible to review. Real photography separates itself.
- * Delete this parameter the moment images land - it is a reviewing aid, not a
- * design decision, and alternating tones is not part of the system.
+ * The flat [MaterialTheme.colorScheme.surfaceVariant] fill behind the image is
+ * what shows while the decode is in flight.
  */
 @Composable
 fun ImagePlate(
+    model: Any?,
     modifier: Modifier = Modifier,
     ratio: Float = Ratio.Product,
-    tone: Int = 0,
+    contentDescription: String? = null,
 ) {
-    val base = MaterialTheme.colorScheme.surfaceVariant
-    val fill = if (tone % 2 == 0) {
-        base
-    } else {
-        lerp(base, MaterialTheme.colorScheme.background, 0.45f)
-    }
-    Box(
+    AsyncImage(
+        model = model,
+        contentDescription = contentDescription,
+        contentScale = ContentScale.Crop,
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(ratio)
-            .background(fill),
+            .background(MaterialTheme.colorScheme.surfaceVariant),
     )
 }
