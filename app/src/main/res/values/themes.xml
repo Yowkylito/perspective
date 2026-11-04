@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Splash/window background only. Real theming lives in ui/theme/Theme.kt.
+         Ivory #FFFDED is the brand ground; the dark-mode counterpart is in values-night. -->
+    <style name="Theme.Perspective" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FFFDED</item>
+        <item name="android:statusBarColor">#FFFDED</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
