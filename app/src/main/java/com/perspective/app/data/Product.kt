@@ -1,5 +1,17 @@
 package com.perspective.app.data
 
+/**
+ * Wall filters. Labels are the tab text, so they are uppercase here rather than
+ * uppercased at the call site -- the display face is always set in caps and
+ * doing it in one place keeps a stray lowercase tab from ever appearing.
+ */
+enum class Category(val label: String) {
+    Tops("TOPS"),
+    Trousers("TROUSERS"),
+    Outerwear("OUTERWEAR"),
+    Accessories("ACCESSORIES"),
+}
+
 data class SizeOption(
     val label: String,
     val available: Boolean = true,
@@ -12,6 +24,7 @@ data class Product(
     val price: Int,
     val sizes: List<SizeOption>,
     val description: String,
+    val category: Category,
     /** Stand-in photography; see [MockImages]. Empty until a catalogue fills it. */
     val images: List<String> = emptyList(),
 ) {
@@ -70,21 +83,29 @@ object SampleCatalogue {
 
     private val drafts = listOf(
         Product("01", "Boxed Rule Shirt", "Undyed Cotton", 7_450, sizes("XXS", "XL"),
-            "Cut straight through the body with a half-placket and a single patch pocket. Woven from undyed long-staple cotton that softens with each wash."),
+            "Cut straight through the body with a half-placket and a single patch pocket. Woven from undyed long-staple cotton that softens with each wash.",
+            category = Category.Tops),
         Product("02", "Reversed Seam Trouser", "Ink", 9_900, sizes("XS"),
-            "A wide, flat-fronted trouser with the seams turned outward. Dry handle, holds a crease without pressing."),
+            "A wide, flat-fronted trouser with the seams turned outward. Dry handle, holds a crease without pressing.",
+            category = Category.Trousers),
         Product("03", "Monotype Knit", "Bone", 12_300, sizes(),
-            "Fine-gauge merino worked on a single bed, with set-in sleeves and a narrow rib at the cuff and hem."),
+            "Fine-gauge merino worked on a single bed, with set-in sleeves and a narrow rib at the cuff and hem.",
+            category = Category.Tops),
         Product("04", "Counterform Coat", "Charcoal", 24_800, sizes("XXS", "XS", "L"),
-            "An unstructured single-breasted coat in a dense wool melton. Falls below the knee and takes a layer underneath without strain."),
+            "An unstructured single-breasted coat in a dense wool melton. Falls below the knee and takes a layer underneath without strain.",
+            category = Category.Outerwear),
         Product("05", "Negative Space Tee", "Undyed Cotton", 3_200, sizes(),
-            "A heavyweight jersey tee with a bound neck and dropped shoulder."),
+            "A heavyweight jersey tee with a bound neck and dropped shoulder.",
+            category = Category.Tops),
         Product("06", "Baseline Trouser", "Flax", 8_600, sizes("M"),
-            "Tapered through the leg with a flat waistband and no belt loops."),
+            "Tapered through the leg with a flat waistband and no belt loops.",
+            category = Category.Trousers),
         Product("07", "Mirror Shirt Jacket", "Olive", 14_200, sizes("XXS"),
-            "Cut as an overshirt in a washed cotton twill, with two flapped chest pockets."),
+            "Cut as an overshirt in a washed cotton twill, with two flapped chest pockets.",
+            category = Category.Outerwear),
         Product("08", "Kerning Scarf", "Bone", 4_900, listOf(SizeOption("One size")),
-            "A long rectangular scarf in brushed lambswool, finished with hand-knotted fringing."),
+            "A long rectangular scarf in brushed lambswool, finished with hand-knotted fringing.",
+            category = Category.Accessories),
     )
 
     /** Plates are attached by position, so the wall never shows two neighbours alike. */

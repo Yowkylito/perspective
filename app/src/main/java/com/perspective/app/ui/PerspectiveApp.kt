@@ -55,11 +55,13 @@ fun PerspectiveApp() {
                     popEnterTransition = { fadeIn(tween(Motion.Standard, easing = Motion.Decelerate)) },
                 ) {
                     CompositionLocalProvider(LocalAnimatedVisibilityScope provides this) {
-                        Chrome(leading = "MENU", onLeading = {}) {
-                            ProductWallScreen(
-                                onProductClick = { nav.navigate("product/${it.id}") },
-                            )
-                        }
+                        // No Chrome wrapper here: the wall draws its own header
+                        // OVER the grid so plates pass underneath it. Wrapping
+                        // it in a bar again would put the grid below the chrome
+                        // and there would be nothing for the glass to reveal.
+                        ProductWallScreen(
+                            onProductClick = { nav.navigate("product/${it.id}") },
+                        )
                     }
                 }
                 composable(
