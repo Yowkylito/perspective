@@ -5,4 +5,12 @@
         <item name="android:statusBarColor">#000000</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
+
+    <!-- Handed to the activity in the manifest; postSplashScreenTheme swaps to
+         Theme.Perspective the moment the window is up. -->
+    <style name="Theme.Perspective.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#000000</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
+        <item name="postSplashScreenTheme">@style/Theme.Perspective</item>
+    </style>
 </resources>

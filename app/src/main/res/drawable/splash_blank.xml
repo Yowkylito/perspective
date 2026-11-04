@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    A deliberately empty splash icon.
+
+    On API 31+ the system splash screen cannot be replaced, only themed — and it
+    would otherwise stamp the launcher icon on the ground, which then has to pop
+    into the animated wordmark that follows. Two presentations of one mark, half
+    a second apart.
+
+    So the system splash shows brand ground and nothing else, and BrandMoment
+    draws the only mark the launch ever shows. The two share a background colour,
+    so the handover between them is invisible.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@android:color/transparent" />
+</shape>
