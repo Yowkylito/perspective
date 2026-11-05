@@ -99,8 +99,10 @@ discount-retail reflex; holding it level is the opposite signal.
 
 Courier Prime and Instrument Sans are SIL OFL 1.1; full texts in `/licenses`.
 Bundling in a commercial app is permitted unmodified and unrenamed, provided the
-copyright and licence notice ship with the app. **TODO: surface both in an in-app
-licences screen before release.**
+copyright and licence notice ship with the app. Both notices ship in
+`assets/licenses/` and are surfaced by `ui/legal/LicencesScreen`, reached from
+the footer at the end of the wall. `/licenses` remains the repository's copy;
+the assets are what satisfies the binary, so change the two together.
 
 ## Structure
 
@@ -216,8 +218,16 @@ themed icons.
 minSdk 26, so `mipmap-anydpi-v26` covers every device and there are no legacy PNG
 density buckets to maintain.
 
-**Still needed for release:** a flat 512x512 PNG for the Play listing, which an
-adaptive icon cannot supply. Generate from the same paths — do not redraw.
+The Play listing's flat 512x512 PNG lives at `store/play-icon-512.png`, which an
+adaptive icon cannot supply. It is **generated from the same paths, never
+redrawn** — `tools/vd2png.py` reads `ic_launcher_foreground.xml` itself, so the
+store tile and the launcher icon cannot drift. Regenerate rather than edit:
+
+    python3 tools/vd2png.py app/src/main/res/drawable/ic_launcher_foreground.xml store/play-icon-512.png
+
+The 108dp viewport is cropped to the 72dp the launcher mask actually reveals
+before scaling, so the mark carries the same weight on a store tile as on a
+home screen.
 
 ## Status
 

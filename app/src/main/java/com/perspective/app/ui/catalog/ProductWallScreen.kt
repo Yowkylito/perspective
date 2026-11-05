@@ -1,12 +1,15 @@
 package com.perspective.app.ui.catalog
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
@@ -15,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,11 +30,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.TextFieldValue
 import com.perspective.app.data.Category
 import com.perspective.app.data.MockImages
 import com.perspective.app.data.Product
 import com.perspective.app.data.SampleCatalogue
+import com.perspective.app.ui.brand.Wordmark
 import com.perspective.app.ui.components.ProductTile
 import com.perspective.app.ui.theme.Space
 
@@ -55,6 +61,7 @@ private const val CollageAfter = 4
 @Composable
 fun ProductWallScreen(
     onProductClick: (Product) -> Unit,
+    onLicences: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by rememberSaveable(stateSaver = TextFieldValue.Saver) {
@@ -139,6 +146,33 @@ fun ProductWallScreen(
 
             items(items.drop(CollageAfter), key = { it.id }) { product ->
                 ProductTile(product = product, onClick = { onProductClick(product) })
+            }
+
+            // The storefront's only non-catalogue destination. A footer is
+            // where the reference storefronts put this sort of thing, and it
+            // keeps the header free -- the bar already carries brand, search
+            // and bag, and a fourth control there would be one too many.
+            item(span = { GridItemSpan(maxLineSpan) }, key = "footer") {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Space.Xxl, start = Space.Gutter, end = Space.Gutter),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    HorizontalDivider(
+                        thickness = Space.Hairline,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                    Spacer(Modifier.height(Space.Xl))
+                    Wordmark(style = MaterialTheme.typography.labelSmall, tracking = 2.dp)
+                    Spacer(Modifier.height(Space.Lg))
+                    Text(
+                        text = "LICENCES",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.clickable(onClick = onLicences),
+                    )
+                }
             }
 
             if (items.isEmpty()) {

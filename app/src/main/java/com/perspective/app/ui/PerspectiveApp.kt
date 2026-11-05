@@ -30,12 +30,14 @@ import androidx.navigation.navArgument
 import com.perspective.app.data.SampleCatalogue
 import com.perspective.app.ui.brand.Wordmark
 import com.perspective.app.ui.catalog.ProductWallScreen
+import com.perspective.app.ui.legal.LicencesScreen
 import com.perspective.app.ui.product.ProductDetailScreen
 import com.perspective.app.ui.theme.Motion
 import com.perspective.app.ui.theme.Space
 
 private const val RouteWall = "wall"
 private const val RouteProduct = "product/{id}"
+private const val RouteLicences = "licences"
 
 @Composable
 fun PerspectiveApp() {
@@ -61,6 +63,7 @@ fun PerspectiveApp() {
                         // and there would be nothing for the glass to reveal.
                         ProductWallScreen(
                             onProductClick = { nav.navigate("product/${it.id}") },
+                            onLicences = { nav.navigate(RouteLicences) },
                         )
                     }
                 }
@@ -77,6 +80,15 @@ fun PerspectiveApp() {
                                 ProductDetailScreen(product = product)
                             }
                         }
+                    }
+                }
+                composable(
+                    RouteLicences,
+                    enterTransition = { fadeIn(tween(Motion.Standard, easing = Motion.Decelerate)) },
+                    popExitTransition = { fadeOut(tween(Motion.Quick, easing = Motion.Accelerate)) },
+                ) {
+                    Chrome(leading = "BACK", onLeading = { nav.popBackStack() }) {
+                        LicencesScreen()
                     }
                 }
             }
