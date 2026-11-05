@@ -49,13 +49,20 @@ private const val HoldMs = 3200L
 /**
  * Where the scrim starts, as a fraction of screen height.
  *
- * It covers the lower 58% and is transparent at its top edge, so there is no
+ * It covers the lower 88% and is transparent at its top edge, so there is no
  * line anywhere on the screen where the photograph stops. A solid block would
  * be simpler and is what the first version did, but it cuts the picture in half
  * and turns the bottom of the screen into a panel — which is the layout of a
  * form, not of a storefront.
+ *
+ * It began at 58% and reads as too thin on device. The reason is which frames
+ * it has to carry: the street shot the preview used is already dark where the
+ * copy sits, so a short ramp looks sufficient there, while the brighter sky
+ * frame and the pale wall frame leave the type fighting the photograph. The
+ * scrim has to be depth enough for the WORST frame in the set, not the one it
+ * was judged on.
  */
-private const val ScrimHeight = 0.58f
+private const val ScrimHeight = 0.88f
 
 /**
  * The first screen: the brand, and a way in.
@@ -119,9 +126,9 @@ fun OnboardingScreen(
                 .background(
                     Brush.verticalGradient(
                         0.00f to Color.Transparent,
-                        0.35f to Ink.copy(alpha = 0.28f),
-                        0.70f to Ink.copy(alpha = 0.66f),
-                        1.00f to Ink.copy(alpha = 0.88f),
+                        0.28f to Ink.copy(alpha = 0.24f),
+                        0.62f to Ink.copy(alpha = 0.70f),
+                        1.00f to Ink.copy(alpha = 0.95f),
                     ),
                 ),
         )
