@@ -78,6 +78,7 @@ fun StorefrontHeader(
     selected: Int,
     onSelect: (Int) -> Unit,
     scrolled: Boolean,
+    onBag: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -124,7 +125,11 @@ fun StorefrontHeader(
                 modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(Space.Sm + Space.Xs))
-            Text(text = "BAG", style = MaterialTheme.typography.labelSmall)
+            Text(
+                text = "BAG",
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.clickable(onClick = onBag),
+            )
         }
 
         CategoryTabs(tabs = tabs, selected = selected, onSelect = onSelect)

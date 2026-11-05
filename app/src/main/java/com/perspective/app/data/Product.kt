@@ -63,6 +63,24 @@ object MockImages {
      */
     val collage: List<String> = (1..3).map { "file:///android_asset/mock/collage/c%d.jpg".format(it) }
 
+    /**
+     * Captions for the banner frames.
+     *
+     * Placeholder names, on the same footing as the product names in
+     * [SampleCatalogue] -- a real campaign title is the brand's to write, and
+     * inventing one that reads as real would be the worst kind of mock data.
+     * These are deliberately plain.
+     */
+    val bannerCaptions: List<String> = listOf("ON THE STREET", "IN PRACTICE", "EVERY DAY")
+
+    /**
+     * One plate per category for the mosaic. Picked by eye for what the
+     * category reads as at a glance, not by any rule -- a lookbook for TOPS, a
+     * walking shot for TROUSERS -- which is exactly the sort of choice real
+     * photography makes properly and mock data can only approximate.
+     */
+    val categoryTiles: List<String> = listOf(plates[0], plates[4], plates[2], plates[3])
+
     /** Four frames for the product at [index], distinct within the product. */
     fun forIndex(index: Int, frames: Int = 4): List<String> =
         List(frames) { plates[(index + it) % plates.size] }

@@ -62,6 +62,7 @@ private const val CollageAfter = 4
 fun ProductWallScreen(
     onProductClick: (Product) -> Unit,
     onLicences: () -> Unit,
+    onBag: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by rememberSaveable(stateSaver = TextFieldValue.Saver) {
@@ -108,7 +109,26 @@ fun ProductWallScreen(
         ) {
             if (editorial) {
                 item(span = { GridItemSpan(maxLineSpan) }, key = "banner") {
-                    CollectionBanner(frames = MockImages.banners)
+                    CollectionBanner(
+                        frames = MockImages.banners,
+                        captions = MockImages.bannerCaptions,
+                    )
+                }
+            }
+
+            if (editorial) {
+                item(span = { GridItemSpan(maxLineSpan) }, key = "mosaic") {
+                    Column {
+                        SectionHeading("SHOP BY CATEGORY", top = Space.Xl)
+                        CategoryMosaic(
+                            tiles = Category.entries.mapIndexed { i, c ->
+                                c to MockImages.categoryTiles[i % MockImages.categoryTiles.size]
+                            },
+                            onSelect = { chosen ->
+                                tab = tabs.indexOf(chosen.label).coerceAtLeast(0)
+                            },
+                        )
+                    }
                 }
             }
 
@@ -196,9 +216,26 @@ fun ProductWallScreen(
             selected = tab,
             onSelect = { tab = it },
             scrolled = scrolled,
+            onBag = onBag,
             modifier = Modifier.align(Alignment.TopCenter),
         )
     }
 }
 
 private const val ALL_TAB = "ALL"
+
+/**
+ * Section heading for the front page.
+ *
+ * Body size with no tracking, per the structure rules: screen titles here sit
+ * level with the copy rather than above it, and letter-spaced small caps are
+ * reserved for micro-labels like SELECT SIZE.
+ */
+@Composable
+private fun SectionHeading(text: String, top: androidx.compose.ui.unit.Dp = Space.Xl) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleLarge,
+        modifier = Modifier.padding(start = Space.Gutter, end = Space.Gutter, top = top, bottom = Space.Md),
+    )
+}

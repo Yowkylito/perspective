@@ -30,6 +30,7 @@ import androidx.navigation.navArgument
 import com.perspective.app.data.SampleCatalogue
 import com.perspective.app.ui.brand.Wordmark
 import com.perspective.app.ui.catalog.ProductWallScreen
+import com.perspective.app.ui.bag.BagScreen
 import com.perspective.app.ui.legal.LicencesScreen
 import com.perspective.app.ui.product.ProductDetailScreen
 import com.perspective.app.ui.theme.Motion
@@ -38,6 +39,7 @@ import com.perspective.app.ui.theme.Space
 private const val RouteWall = "wall"
 private const val RouteProduct = "product/{id}"
 private const val RouteLicences = "licences"
+private const val RouteBag = "bag"
 
 @Composable
 fun PerspectiveApp() {
@@ -64,6 +66,7 @@ fun PerspectiveApp() {
                         ProductWallScreen(
                             onProductClick = { nav.navigate("product/${it.id}") },
                             onLicences = { nav.navigate(RouteLicences) },
+                            onBag = { nav.navigate(RouteBag) },
                         )
                     }
                 }
@@ -80,6 +83,15 @@ fun PerspectiveApp() {
                                 ProductDetailScreen(product = product)
                             }
                         }
+                    }
+                }
+                composable(
+                    RouteBag,
+                    enterTransition = { fadeIn(tween(Motion.Standard, easing = Motion.Decelerate)) },
+                    popExitTransition = { fadeOut(tween(Motion.Quick, easing = Motion.Accelerate)) },
+                ) {
+                    Chrome(leading = "BACK", onLeading = { nav.popBackStack() }) {
+                        BagScreen()
                     }
                 }
                 composable(

@@ -5,12 +5,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.perspective.app.ui.components.FrameCounter
 import com.perspective.app.ui.components.ImagePlate
+import androidx.compose.foundation.layout.padding
+import com.perspective.app.ui.theme.Ivory
 import com.perspective.app.ui.theme.Ratio
+import com.perspective.app.ui.theme.Space
 
 /**
  * The campaign banner at the head of the wall.
@@ -36,6 +42,7 @@ import com.perspective.app.ui.theme.Ratio
 @Composable
 fun CollectionBanner(
     frames: List<String>,
+    captions: List<String> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     if (frames.isEmpty()) return
@@ -50,6 +57,19 @@ fun CollectionBanner(
     ) {
         HorizontalPager(state = pager, modifier = Modifier.fillMaxWidth()) { page ->
             ImagePlate(model = frames[page], ratio = Ratio.Banner)
+        }
+        // The caption rides the same scrim as the counter, opposite corner. It
+        // names what the frame is; without it a campaign image is a handsome
+        // picture of nobody's collection in particular.
+        captions.getOrNull(pager.currentPage)?.let { caption ->
+            Text(
+                text = caption,
+                style = MaterialTheme.typography.labelSmall,
+                color = Ivory,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(Space.Md),
+            )
         }
         FrameCounter(current = pager.currentPage + 1, total = frames.size)
     }
