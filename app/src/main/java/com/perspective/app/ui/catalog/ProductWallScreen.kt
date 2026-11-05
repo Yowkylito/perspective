@@ -132,6 +132,18 @@ fun ProductWallScreen(
                 }
             }
 
+            if (editorial) {
+                item(span = { GridItemSpan(maxLineSpan) }, key = "featured") {
+                    Column {
+                        SectionHeading("FEATURED")
+                        EditorialCards(
+                            cards = MockImages.featured,
+                            onCard = {},
+                        )
+                    }
+                }
+            }
+
             item(span = { GridItemSpan(maxLineSpan) }, key = "title") {
                 Column(
                     modifier = Modifier.padding(

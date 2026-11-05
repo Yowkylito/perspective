@@ -64,6 +64,20 @@ object MockImages {
     val collage: List<String> = (1..3).map { "file:///android_asset/mock/collage/c%d.jpg".format(it) }
 
     /**
+     * The FEATURED cards: label and plate.
+     *
+     * Plates 1, 5 and 6 — chosen because the hero uses the street frames and
+     * the mosaic uses plates 0, 2, 3 and 4, so no picture appears twice on the
+     * front page. With real photography this would be an editor's choice; with
+     * thirteen crops of ten photographs it is arithmetic.
+     */
+    val featured: List<Pair<String, String>> = listOf(
+        "THE SHIRTING" to plates[1],
+        "OUTERWEAR" to plates[5],
+        "THE KNITS" to plates[6],
+    )
+
+    /**
      * Captions for the banner frames.
      *
      * Placeholder names, on the same footing as the product names in

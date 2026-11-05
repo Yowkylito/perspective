@@ -21,8 +21,16 @@ import com.perspective.app.ui.theme.Ink
 import com.perspective.app.ui.theme.Ivory
 import com.perspective.app.ui.theme.Space
 
-/** Square tiles: the mosaic is a map of the shop, not another run of products. */
-private const val TileRatio = 1f
+/**
+ * Landscape, 3:2 — the reference's proportion, and the point of a mosaic.
+ *
+ * Deliberately not [com.perspective.app.ui.theme.Ratio.Product]: the product
+ * ratio belongs to products, and giving a category the same shape would say
+ * these tiles are more merchandise when the first thing they have to say is
+ * that they are doors. Landscape also puts the whole category set on screen at
+ * once, which is what a map is for.
+ */
+private const val TileRatio = 3f / 2f
 
 /**
  * A way into each category, as pictures rather than a list of words.
@@ -31,11 +39,6 @@ private const val TileRatio = 1f
  * someone who arrived without a destination and is looking rather than
  * searching. The two are not redundant — a tab is for someone who knows the
  * word, a tile is for someone who does not yet.
- *
- * **Square, where the catalogue is 2:3.** The product ratio belongs to
- * products. Giving the same shape to a category would say these tiles are more
- * merchandise, and the first thing this section has to communicate is that they
- * are not: they are doors.
  *
  * **The label sits on the image here, and under it on a product tile.** That is
  * not an inconsistency. On a tile the label is data about a thing for sale —

@@ -32,10 +32,12 @@ import com.perspective.app.ui.brand.Wordmark
 import com.perspective.app.ui.catalog.ProductWallScreen
 import com.perspective.app.ui.bag.BagScreen
 import com.perspective.app.ui.legal.LicencesScreen
+import com.perspective.app.ui.onboarding.OnboardingScreen
 import com.perspective.app.ui.product.ProductDetailScreen
 import com.perspective.app.ui.theme.Motion
 import com.perspective.app.ui.theme.Space
 
+private const val RouteOnboarding = "onboarding"
 private const val RouteWall = "wall"
 private const val RouteProduct = "product/{id}"
 private const val RouteLicences = "licences"
@@ -49,7 +51,22 @@ fun PerspectiveApp() {
     // ancestor of both the tile and the detail hero for them to match.
     SharedTransitionLayout {
         CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-            NavHost(navController = nav, startDestination = RouteWall) {
+            NavHost(navController = nav, startDestination = RouteOnboarding) {
+                // First, and without chrome -- the onboarding screen IS the
+                // brand presenting itself, so a bar over it would be the app
+                // introducing itself twice.
+                composable(
+                    RouteOnboarding,
+                    exitTransition = { fadeOut(tween(Motion.Quick, easing = Motion.Accelerate)) },
+                ) {
+                    OnboardingScreen(
+                        onEnter = {
+                            nav.navigate(RouteWall) {
+                                popUpTo(RouteOnboarding) { inclusive = true }
+                            }
+                        },
+                    )
+                }
                 composable(
                     RouteWall,
                     // The non-shared content fades while the image travels. That
