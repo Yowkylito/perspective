@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,11 +22,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import com.perspective.app.data.MockImages
 import com.perspective.app.ui.brand.Wordmark
 import com.perspective.app.ui.components.PerspectiveButton
+import com.perspective.app.ui.theme.Ink
+import com.perspective.app.ui.theme.Ivory
 import com.perspective.app.ui.theme.Motion
 import com.perspective.app.ui.theme.Space
 import androidx.compose.ui.unit.dp
@@ -40,6 +45,17 @@ import kotlinx.coroutines.delay
  * dissolve is the luxurious register, and this brand is the other one.
  */
 private const val HoldMs = 3200L
+
+/**
+ * Where the scrim starts, as a fraction of screen height.
+ *
+ * It covers the lower 58% and is transparent at its top edge, so there is no
+ * line anywhere on the screen where the photograph stops. A solid block would
+ * be simpler and is what the first version did, but it cuts the picture in half
+ * and turns the bottom of the screen into a panel — which is the layout of a
+ * form, not of a storefront.
+ */
+private const val ScrimHeight = 0.58f
 
 /**
  * The first screen: the brand, and a way in.
@@ -91,26 +107,52 @@ fun OnboardingScreen(
             )
         }
 
+        // Three stops, not two. A single transparent-to-black ramp still shows a
+        // faint band where it begins; carrying most of the darkening into the
+        // lower third keeps the top of the scrim genuinely invisible and leaves
+        // the photograph readable for longer down the frame.
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .fillMaxHeight(ScrimHeight)
+                .background(
+                    Brush.verticalGradient(
+                        0.00f to Color.Transparent,
+                        0.35f to Ink.copy(alpha = 0.28f),
+                        0.70f to Ink.copy(alpha = 0.66f),
+                        1.00f to Ink.copy(alpha = 0.88f),
+                    ),
+                ),
+        )
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background)
                 .navigationBarsPadding()
-                .padding(horizontal = Space.Gutter, vertical = Space.Xl),
+                .padding(start = Space.Gutter, end = Space.Gutter, bottom = Space.Xl),
         ) {
-            Wordmark(style = MaterialTheme.typography.labelMedium, tracking = 2.dp)
+            // Fixed Ivory throughout: this block sits on a photograph in both
+            // modes, so anything theme-derived would be tracking a background
+            // that is not there.
+            Wordmark(
+                style = MaterialTheme.typography.labelMedium,
+                tracking = 2.dp,
+                color = Ivory,
+            )
             Spacer(Modifier.height(Space.Lg))
             Text(
                 text = "Clothing made to be worn, not displayed. " +
                     "Cut plainly, in colours that hold.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Ivory.copy(alpha = 0.82f),
             )
             Spacer(Modifier.height(Space.Xl))
             PerspectiveButton(
                 label = "ENTER THE SHOP",
                 onClick = onEnter,
+                ink = Ivory,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

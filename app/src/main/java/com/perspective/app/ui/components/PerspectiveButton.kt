@@ -26,6 +26,11 @@ import com.perspective.app.ui.theme.Space
  *
  * Label is set uppercase by the caller's style, never by transforming the string,
  * so screen readers still announce ordinary words.
+ *
+ * [ink] exists for the one case where the button does not sit on a themed
+ * surface: over photography, where `onBackground` would track the theme and so
+ * track the wrong background — black on a dark scrim in light mode. Pass a
+ * fixed colour there, as the frame counter and the campaign labels do.
  */
 @Composable
 fun PerspectiveButton(
@@ -33,8 +38,8 @@ fun PerspectiveButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    ink: Color = MaterialTheme.colorScheme.onBackground,
 ) {
-    val ink = MaterialTheme.colorScheme.onBackground
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
@@ -44,12 +49,12 @@ fun PerspectiveButton(
         // inactive has to stay legible, or it reads as a rendering fault.
         border = BorderStroke(
             Space.Hairline,
-            if (enabled) ink else MaterialTheme.colorScheme.outline,
+            if (enabled) ink else ink.copy(alpha = 0.38f),
         ),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.Transparent,
             contentColor = ink,
-            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledContentColor = ink.copy(alpha = 0.38f),
         ),
         modifier = modifier
             .fillMaxWidth()
