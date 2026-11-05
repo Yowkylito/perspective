@@ -19,6 +19,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -37,6 +41,18 @@ import com.perspective.app.ui.product.ProductDetailScreen
 import com.perspective.app.ui.theme.Motion
 import com.perspective.app.ui.theme.Space
 
+/**
+ * How far the wall's own content trails the photograph that is carrying it.
+ *
+ * The crossing is one element moving and everything else getting out of its
+ * way, so the shop must not arrive alongside the picture — it arrives in its
+ * wake. The delay is what removes the competition for attention; 80 is the
+ * smallest value that does it and still lands the two together, since
+ * 80 + Motion.Standard is Motion.Considered exactly. No claim is made about
+ * what the eye does inside those 80ms.
+ */
+private const val WallTrailMs = 80
+
 private const val RouteOnboarding = "onboarding"
 private const val RouteWall = "wall"
 private const val RouteProduct = "product/{id}"
@@ -46,6 +62,13 @@ private const val RouteBag = "bag"
 @Composable
 fun PerspectiveApp() {
     val nav = rememberNavController()
+
+    // Which campaign photograph is on screen. Hoisted here because it belongs
+    // to neither screen on its own: the onboarding hero and the banner at the
+    // head of the wall draw from one set, and the picture crosses from one to
+    // the other when the shop opens. Two private counters would let it change
+    // identity in mid-air, which is the one thing that crossing cannot survive.
+    var campaignFrame by rememberSaveable { mutableIntStateOf(0) }
 
     // SharedTransitionLayout must wrap the NavHost: it has to be a common
     // ancestor of both the tile and the detail hero for them to match.
@@ -59,19 +82,41 @@ fun PerspectiveApp() {
                     RouteOnboarding,
                     exitTransition = { fadeOut(tween(Motion.Quick, easing = Motion.Accelerate)) },
                 ) {
-                    OnboardingScreen(
-                        onEnter = {
-                            nav.navigate(RouteWall) {
-                                popUpTo(RouteOnboarding) { inclusive = true }
-                            }
-                        },
-                    )
+                    // The scope has to be provided here too, not only on the
+                    // destinations that already had it: the photograph and the
+                    // wordmark both cross FROM this screen, and a shared
+                    // element with only one scope degrades silently to nothing.
+                    CompositionLocalProvider(LocalAnimatedVisibilityScope provides this) {
+                        OnboardingScreen(
+                            frame = campaignFrame,
+                            onFrame = { campaignFrame = it },
+                            onEnter = {
+                                nav.navigate(RouteWall) {
+                                    popUpTo(RouteOnboarding) { inclusive = true }
+                                }
+                            },
+                        )
+                    }
                 }
                 composable(
                     RouteWall,
                     // The non-shared content fades while the image travels. That
                     // is the whole shape of the transition: one element moves and
                     // everything else gets out of its way.
+                    //
+                    // Arriving from onboarding the wall is what gets out of the
+                    // way, so it fades up behind the photograph rather than with
+                    // it. Nothing is staggered per tile: the grid recycles, so a
+                    // stagger would re-fire every time a row scrolled back.
+                    enterTransition = {
+                        fadeIn(
+                            tween(
+                                Motion.Standard,
+                                delayMillis = WallTrailMs,
+                                easing = Motion.Decelerate,
+                            ),
+                        )
+                    },
                     exitTransition = { fadeOut(tween(Motion.Quick, easing = Motion.Accelerate)) },
                     popEnterTransition = { fadeIn(tween(Motion.Standard, easing = Motion.Decelerate)) },
                 ) {
@@ -84,6 +129,7 @@ fun PerspectiveApp() {
                             onProductClick = { nav.navigate("product/${it.id}") },
                             onLicences = { nav.navigate(RouteLicences) },
                             onBag = { nav.navigate(RouteBag) },
+                            initialCampaignFrame = campaignFrame,
                         )
                     }
                 }

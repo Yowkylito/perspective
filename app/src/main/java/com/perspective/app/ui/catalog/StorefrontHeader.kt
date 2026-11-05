@@ -31,6 +31,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.perspective.app.ui.brand.Wordmark
+import com.perspective.app.ui.brandWordmark
 import com.perspective.app.ui.theme.Motion
 import com.perspective.app.ui.theme.Space
 
@@ -117,7 +118,14 @@ fun StorefrontHeader(
                 .padding(horizontal = Space.Gutter),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Wordmark(style = MaterialTheme.typography.labelMedium, tracking = 2.dp)
+            // The other end of the wordmark's journey. It is the same mark
+            // the launch sequence assembled and the onboarding block held; this
+            // is simply where it works from once the shop is open.
+            Wordmark(
+                style = MaterialTheme.typography.labelMedium,
+                tracking = 2.dp,
+                modifier = Modifier.brandWordmark(),
+            )
             Spacer(Modifier.width(Space.Sm + Space.Xs))
             SearchField(
                 value = query,

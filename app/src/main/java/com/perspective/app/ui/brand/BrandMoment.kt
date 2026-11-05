@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +30,9 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.lerp as lerpColor
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -40,20 +43,34 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
+import com.perspective.app.ui.theme.Ivory
 import com.perspective.app.ui.theme.Motion
 import com.perspective.app.ui.theme.Space
 
-/** Mirrors the bar height in PerspectiveApp's Chrome. Keep the two in step. */
-private val ChromeHeight = 56.dp
+/**
+ * Fallback geometry, used only when no screen reports a target.
+ *
+ * Mirrors the bar height in PerspectiveApp's Chrome, and displaySmall (22sp)
+ * down to labelMedium (13sp), which is what every wordmark outside this
+ * sequence is set in. The live path measures both instead -- see
+ * [LocalBrandMarkTarget].
+ */
+private val FallbackBarHeight = 56.dp
 
 /**
- * displaySmall (22sp) down to labelMedium (13sp), which is what the chrome
- * wordmark is set in. Every other splash-side measurement is divided by this so
- * that at the end of the travel the mark is not merely similar to the chrome
- * mark but geometrically identical to it — same tracking, same rule inset, same
- * hairline. That is the whole reason the handover is invisible.
+ * displaySmall (22sp) down to labelMedium (13sp), which is what every wordmark
+ * outside this sequence is set in.
+ *
+ * This is NOT fallback-only, and the name said so once and was wrong. The
+ * travel's scale comes from the two measured widths, but the mark's internal
+ * proportions -- frame insets, tracking, rule stroke -- are pre-divided by this
+ * so they land on their design values once the travel has scaled everything
+ * down. The two agree exactly today, because both the glyph component and the
+ * tracking component of the width are in the same 13/22 ratio and Courier Prime
+ * is monospaced. Set the receiving mark in a different style and the outer
+ * width would still match while the insets landed a few percent out.
  */
-private const val ChromeScale = 13f / 22f
+private const val MarkScale = 13f / 22f
 
 /**
  * The timeline, in milliseconds from the start of the sequence.
@@ -82,6 +99,29 @@ private const val WipeEnd = 420
 private const val TravelStart = 560
 private const val TravelEnd = 920
 private const val TotalMs = TravelEnd
+
+/**
+ * The mark's ink at a given point in the sequence.
+ *
+ * Its ground changes under it mid-sequence: the splash ground until the opening
+ * starts, photography after. Theme ink would then be tracking a background that
+ * is no longer there, which is the rule OnboardingScreen states for its own
+ * block -- so the mark crosses to the fixed Ivory it will be wearing when it
+ * lands, over the first [Motion.Instant] of the travel.
+ *
+ * A function rather than a value read in [BrandMoment]'s own scope, because
+ * reading an Animatable there subscribes the whole composable to every frame of
+ * the master tween -- and [BrandMoment] is a BoxWithConstraints, so a
+ * recomposition rebuilds its measure policy and remeasures the mark as well.
+ * Fifty-five remeasure passes of an eleven-glyph Row, in the window the gate's
+ * own docstring reserves for start-up work. Called from draw scopes and from
+ * [TravellingMark] instead.
+ */
+private fun markInk(resting: Color, progress: Float): Color = lerpColor(
+    start = resting,
+    stop = Ivory,
+    fraction = phase(progress, TravelStart, TravelStart + Motion.Instant, Motion.Standard_),
+)
 
 /** Maps overall [progress] onto one phase's own 0..1, with that phase's curve. */
 private fun phase(progress: Float, startMs: Int, endMs: Int, easing: Easing): Float {
@@ -120,10 +160,30 @@ fun BrandGate(content: @Composable () -> Unit) {
 
     var done by rememberSaveable { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        content()
-        if (!done && !animationsOff) {
-            BrandMoment(onDone = { done = true })
+    // Where the mark is going, reported by whichever screen draws the receiving
+    // wordmark. See LocalBrandMarkTarget for why this is measured rather than
+    // written down: a handover target that is a constant goes silently wrong
+    // the moment the receiving screen moves, and twice already has.
+    val markTarget = remember { mutableStateOf<Rect?>(null) }
+    // Stops accepting once the sequence is over. The receiving mark goes on to
+    // travel into the storefront bar, which moves its bounds every frame of
+    // that crossing; nothing reads the target by then, and recording it would
+    // be pure churn.
+    val reportTarget = remember<(Rect) -> Unit> {
+        { bounds -> if (!done && markTarget.value != bounds) markTarget.value = bounds }
+    }
+
+    val active = !done && !animationsOff
+
+    CompositionLocalProvider(
+        LocalBrandMarkTarget provides reportTarget,
+        LocalBrandMomentActive provides active,
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            content()
+            if (active) {
+                BrandMoment(target = markTarget.value, onDone = { done = true })
+            }
         }
     }
 }
@@ -132,10 +192,16 @@ fun BrandGate(content: @Composable () -> Unit) {
  * The wordmark assembling itself, then opening into the storefront.
  *
  * **What it explains**, since this codebase does not allow motion that explains
- * nothing: where the wordmark in the app bar came from, and where the shop came
- * from. The mark is built at full size; then its rule opens outward until it is
- * the screen, with the storefront inside it, while the wordmark travels to the
- * exact position and size it occupies in the chrome.
+ * nothing: where the wordmark on the first screen came from, and where that
+ * screen came from. The mark is built at full size; then its rule opens outward
+ * until it is the screen, with the shop inside it, while the wordmark travels
+ * to the exact position and size the receiving screen draws it at — reported by
+ * that screen through [LocalBrandMarkTarget], never assumed here.
+ *
+ * It is the first leg of one journey, not a self-contained flourish. The mark
+ * set down here is the same object that later rises into the storefront bar
+ * when the shop opens, so a single element carries the eye from the first frame
+ * of the app to the catalogue without ever being lost and re-found.
  *
  * **The opening is the brand's own geometry, deliberately.** The reference for
  * this was a sportswear app whose splash is swept away by a diagonal band --
@@ -159,18 +225,28 @@ fun BrandGate(content: @Composable () -> Unit) {
  * interface making you wait, which is the luxurious register, not this one.
  */
 @Composable
-private fun BrandMoment(onDone: () -> Unit) {
+private fun BrandMoment(target: Rect?, onDone: () -> Unit) {
     val finish by rememberUpdatedState(onDone)
 
     val progress = remember { Animatable(0f) }
-    val ink = MaterialTheme.colorScheme.onBackground
     val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-    LaunchedEffect(Unit) {
-        progress.animateTo(1f, tween(TotalMs, easing = LinearEasing))
+    // Skipping finishes the sequence; it does not cut it. Dropping a
+    // full-screen ground in one frame is a worse artefact than the thing being
+    // skipped, and this is the gesture of someone saying "yes, get on with it",
+    // not of something going wrong. The remainder runs at Motion.Quick on the
+    // leaving curve, which is decisive without being a jump cut.
+    var skipped by remember { mutableStateOf(false) }
+    LaunchedEffect(skipped) {
+        if (skipped) {
+            progress.animateTo(1f, tween(Motion.Quick, easing = Motion.Accelerate))
+        } else {
+            progress.animateTo(1f, tween(TotalMs, easing = LinearEasing))
+        }
         finish()
     }
 
+    val restingInk = MaterialTheme.colorScheme.onBackground
     val ground = MaterialTheme.colorScheme.background
     // The rule's resting bounds, captured once at first layout so the opening
     // starts exactly where the rule is rather than a frame behind it.
@@ -179,14 +255,17 @@ private fun BrandMoment(onDone: () -> Unit) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(Unit) { detectTapGestures { finish() } }
+            .pointerInput(Unit) { detectTapGestures { skipped = true } }
             .clearAndSetSemantics { },
         contentAlignment = Alignment.Center,
     ) {
-        val targetY = with(LocalDensity.current) {
-            (statusBar + ChromeHeight / 2).toPx() - constraints.maxHeight / 2f
+        // Only reached when no screen reported a target -- a preview, a test, or
+        // a first screen that draws no mark of its own. It puts the mark where a
+        // 56dp bar would carry it, which is where the app bar screens draw it.
+        val fallbackY = with(LocalDensity.current) {
+            (statusBar + FallbackBarHeight / 2).toPx() - constraints.maxHeight / 2f
         }
-        val strokeDp = Space.Hairline / ChromeScale
+        val strokeDp = Space.Hairline / MarkScale
 
         // Ground as four bands around a growing hole, rather than a sheet that
         // fades. A fade dissolves the splash everywhere at once and says
@@ -213,8 +292,21 @@ private fun BrandMoment(onDone: () -> Unit) {
         Box(
             modifier = Modifier.graphicsLayer {
                 val t = phase(progress.value, TravelStart, TravelEnd, Motion.Standard_)
-                translationY = lerp(0f, targetY, t)
-                scaleX = lerp(1f, ChromeScale, t)
+                val from = ruleBounds
+                val to = if (from != null && from.width > 0f) target else null
+                // Scale comes from the two measured widths rather than from a
+                // ratio of point sizes, so the mark arrives the same OUTER
+                // width as the one underneath it however that one is set. Its
+                // internal proportions still come from MarkScale -- see there.
+                if (from != null && to != null) {
+                    translationX = lerp(0f, to.center.x - from.center.x, t)
+                    translationY = lerp(0f, to.center.y - from.center.y, t)
+                    scaleX = lerp(1f, to.width / from.width, t)
+                } else {
+                    translationX = 0f
+                    translationY = lerp(0f, fallbackY, t)
+                    scaleX = lerp(1f, MarkScale, t)
+                }
                 scaleY = scaleX
             },
             contentAlignment = Alignment.Center,
@@ -228,8 +320,8 @@ private fun BrandMoment(onDone: () -> Unit) {
                         // The chrome's own frame insets, pre-divided so they
                         // land on 16dp and 12dp once the travel has scaled
                         // everything down.
-                        horizontal = Space.Md / ChromeScale,
-                        vertical = (Space.Sm + Space.Xs) / ChromeScale,
+                        horizontal = Space.Md / MarkScale,
+                        vertical = (Space.Sm + Space.Xs) / MarkScale,
                     )
                     .drawWithContent {
                         val w = phase(progress.value, WipeStart, WipeEnd, Motion.Decelerate)
@@ -238,12 +330,7 @@ private fun BrandMoment(onDone: () -> Unit) {
                         }
                     },
             ) {
-                Wordmark(
-                    boxed = false,
-                    style = MaterialTheme.typography.displaySmall,
-                    tracking = 2.dp / ChromeScale,
-                    color = ink,
-                )
+                TravellingMark(restingInk = restingInk, progress = { progress.value })
             }
 
             // The rule is drawn rather than bordered so it can open from the
@@ -257,7 +344,7 @@ private fun BrandMoment(onDone: () -> Unit) {
                 // own edge is the rule, and two of them would read as a seam.
                 val alpha = 1f - phase(progress.value, TravelStart, TravelEnd, Motion.Accelerate)
                 drawRect(
-                    color = ink.copy(alpha = alpha),
+                    color = markInk(restingInk, progress.value).copy(alpha = alpha),
                     topLeft = Offset((size.width - width) / 2f + stroke / 2f, stroke / 2f),
                     size = Size(width - stroke, size.height - stroke),
                     style = Stroke(width = stroke),
@@ -265,4 +352,21 @@ private fun BrandMoment(onDone: () -> Unit) {
             }
         }
     }
+}
+
+/**
+ * The wordmark, in its own composition scope.
+ *
+ * [progress] is read here rather than by the caller so that the per-frame
+ * invalidation stops at this node. Outside the ink ramp the colour is a stable
+ * value, so [Wordmark] itself skips and the glyph tree is not rebuilt.
+ */
+@Composable
+private fun TravellingMark(restingInk: Color, progress: () -> Float) {
+    Wordmark(
+        boxed = false,
+        style = MaterialTheme.typography.displaySmall,
+        tracking = 2.dp / MarkScale,
+        color = markInk(restingInk, progress()),
+    )
 }

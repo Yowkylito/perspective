@@ -38,7 +38,14 @@ object Motion {
     /** The default. Layout changes, expansion, anything that moves an edge. */
     const val Standard = 280
 
-    /** Reserved for a shared element crossing between screens. Nothing else. */
+    /**
+     * Elements crossing between screens, and the onboarding frame crossfade.
+     *
+     * Three things cross: the product image, the campaign photograph and the
+     * wordmark. The one exception that is not a crossing is the onboarding
+     * screen changing frame, which is a full-bleed photograph replacing
+     * another and is the only in-screen change large enough to earn it.
+     */
     const val Considered = 360
 
     /**
@@ -53,6 +60,7 @@ object Motion {
     /** Standard in-and-out, for changes that both start and end on screen. */
     val Standard_: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
+    fun <T> instant(): FiniteAnimationSpec<T> = tween(Instant, easing = Standard_)
     fun <T> quick(): FiniteAnimationSpec<T> = tween(Quick, easing = Standard_)
     fun <T> standard(): FiniteAnimationSpec<T> = tween(Standard, easing = Standard_)
     fun <T> arriving(): FiniteAnimationSpec<T> = tween(Standard, easing = Decelerate)

@@ -64,6 +64,7 @@ fun ProductWallScreen(
     onLicences: () -> Unit,
     onBag: () -> Unit,
     modifier: Modifier = Modifier,
+    initialCampaignFrame: Int = 0,
 ) {
     var query by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue())
@@ -112,6 +113,7 @@ fun ProductWallScreen(
                     CollectionBanner(
                         frames = MockImages.banners,
                         captions = MockImages.bannerCaptions,
+                        initialFrame = initialCampaignFrame,
                     )
                 }
             }

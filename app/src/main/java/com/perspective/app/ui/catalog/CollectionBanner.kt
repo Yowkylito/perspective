@@ -1,19 +1,24 @@
 package com.perspective.app.ui.catalog
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.runtime.Composable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import coil.compose.AsyncImage
+import com.perspective.app.ui.campaignFrame
 import com.perspective.app.ui.components.FrameCounter
-import com.perspective.app.ui.components.ImagePlate
-import androidx.compose.foundation.layout.padding
 import com.perspective.app.ui.theme.Ivory
 import com.perspective.app.ui.theme.Ratio
 import com.perspective.app.ui.theme.Space
@@ -38,15 +43,31 @@ import com.perspective.app.ui.theme.Space
  *
  * [Ratio.Banner] rather than [Ratio.Product] keeps this from reading as one
  * more tile — see the token for why 3:4 and not 2:3 or 4:5.
+ *
+ * **[initialFrame] is the frame the onboarding screen was showing.** This is
+ * where the photograph from the first screen lands, and it has to land as
+ * itself: opening at frame 0 while the person was looking at frame 2 would swap
+ * the picture mid-flight and spend the continuity the crossing exists to buy.
+ * It seeds the pager once, on arrival; the banner still never advances itself.
+ *
+ * **Why this no longer draws through `ImagePlate`.** The ratio has to sit
+ * OUTSIDE the shared node and nothing inside it may re-derive a size —
+ * `ImagePlate` appends its own `aspectRatio` after the caller's modifier, which
+ * would put it inside, and `Modifier.aspectRatio` discards the animated height
+ * it is handed. The banner would then hold 3:4 for the whole flight and only
+ * the width would move. [com.perspective.app.ui.campaignFrame] has the detail.
  */
 @Composable
 fun CollectionBanner(
     frames: List<String>,
     captions: List<String> = emptyList(),
+    initialFrame: Int = 0,
     modifier: Modifier = Modifier,
 ) {
     if (frames.isEmpty()) return
-    val pager = rememberPagerState { frames.size }
+    val pager = rememberPagerState(
+        initialPage = initialFrame.coerceIn(0, frames.lastIndex),
+    ) { frames.size }
 
     Box(
         modifier = modifier
@@ -55,12 +76,28 @@ fun CollectionBanner(
                 contentDescription = "Campaign images, ${frames.size} frames, swipe to change"
             },
     ) {
-        HorizontalPager(state = pager, modifier = Modifier.fillMaxWidth()) { page ->
-            ImagePlate(model = frames[page], ratio = Ratio.Banner)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(Ratio.Banner)
+                .campaignFrame(),
+        ) {
+            HorizontalPager(state = pager, modifier = Modifier.fillMaxSize()) { page ->
+                AsyncImage(
+                    model = frames[page],
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                )
+            }
         }
-        // The caption rides the same scrim as the counter, opposite corner. It
-        // names what the frame is; without it a campaign image is a handsome
-        // picture of nobody's collection in particular.
+        // Counter and caption sit OUTSIDE the shared node deliberately. Carried
+        // inside it they would ride the photograph across at full-screen scale
+        // — a frame counter the size of a headline over the first screen — and
+        // then shrink into place. They belong to the banner, so they arrive
+        // with the wall.
         captions.getOrNull(pager.currentPage)?.let { caption ->
             Text(
                 text = caption,

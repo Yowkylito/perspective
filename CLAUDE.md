@@ -58,7 +58,7 @@ differs.
 ## Toolchain
 
 AGP 8.10.1 · Kotlin 2.1.0 · compileSdk 36 · minSdk 26 · JDK 17 ·
-Compose BOM 2025.10.00 · Material3 1.9.0-beta02
+Compose BOM 2025.10.00 · Material3 1.4.0 · Compose animation 1.9.3
 
 The Gradle wrapper points at a local distribution
 (`~/MyFolders/gradle-9.1.0-all.zip`), matching the other projects in this
@@ -166,13 +166,45 @@ Two things that failed the test and are deliberately absent:
   against flat placeholder plates it is a visual no-op that cannot be verified.
 
 What is present, and what each one earns its place by doing:
-- **Shared element, wall -> detail.** The only use of `Motion.Considered`. Shows
-  that the thing you tapped became the thing you are looking at; without it the
-  navigation is a cut and the eye has to find the product again.
+- **Shared element, wall -> detail.** Shows that the thing you tapped became the
+  thing you are looking at; without it the navigation is a cut and the eye has
+  to find the product again.
+- **Shared element, onboarding -> wall.** The campaign photograph contracts from
+  full bleed into the banner at the head of the wall. Both ends draw from
+  `MockImages.banners`, so there is a real object to follow across the boundary
+  rather than an invented one — which is what makes the two screens read as one
+  place instead of a cut between strangers. The frame index is hoisted into
+  `PerspectiveApp` for the same reason: two private counters would let the
+  picture change identity in mid-air.
+- **Wordmark, onboarding -> bar.** Same glyphs, same size, same tracking at both
+  ends; only the ink differs, so it is `sharedBounds` and the two cross-fade.
+  It is the last leg of the journey `BrandMoment` starts, so one object carries
+  the eye from the first frame of the app to the catalogue.
+- **Departure beat.** Press and the page clears itself down to the photograph
+  and the mark before the shop opens. It acknowledges the press inside the
+  window where a response still reads as instantaneous, and it leaves nothing on
+  screen for the crossing to shove aside.
 - **Nav crossfade.** Non-shared content gets out of the travelling image's way.
 - **Size rule fade-in.** Marks which size the tap landed on.
+- **CTA press fill.** The rule fills and the label inverts. Confirms the press
+  landed; flat and square because a ripple is a Material gesture in an interface
+  that speaks no other Material.
 - **CTA label crossfade.** The label changes meaning; a hard swap reads as a glitch.
 - **Accordion expansion.** Shows that content came from the row you pressed.
+
+`Motion.Considered` is for elements crossing between screens. There are three:
+the product image, the campaign photograph and the wordmark. The one thing that
+holds it without being a crossing is the onboarding frame change, where a
+full-bleed photograph replaces another — the only in-screen change big enough
+to earn it. `Motion.kt` records that exception; nothing else may join it.
+
+**A handover target is measured, never written down.** `BrandMoment` reads the
+receiving wordmark's bounds through `LocalBrandMarkTarget` rather than holding a
+constant for where it believes that mark sits. The constant version went wrong
+twice — once when the wall swapped its app bar for a storefront header, again
+when onboarding became the first screen — and both times the symptom was the
+same and silent: a correct travel to a position where nothing was waiting, then
+a full-opacity pop. Nothing fails to compile when a screen moves.
 
 **Do not hand-roll reduced-motion duration scaling.** Compose reads
 `Settings.Global.ANIMATOR_DURATION_SCALE` itself and observes it live, so
@@ -242,8 +274,21 @@ Brand system complete and a working two-screen scaffold on top of it.
   unavailable, square outlined CTA, accordions.
 - `ui/PerspectiveApp` — 56dp chrome carrying the wordmark, word labels instead
   of icons, NavHost between wall and detail.
+- `ui/onboarding/OnboardingScreen` — full-bleed photography behind a graded
+  scrim, one line of copy, one control. Light system-bar icons while it is up,
+  because it is a photograph and the theme's own choice tracks a ground that is
+  not there.
 
-Verified on a physical device in both modes, not just compiled.
+**The first run is one continuous gesture, not three screens.** The mark
+assembles, sets itself down on the onboarding block, and later rises into the
+storefront bar; the photograph you are shown is the photograph the shop opens
+on. Both halves are in the Motion section. The pieces are coupled on purpose
+and the couplings are the fragile part: `BrandMoment` needs a reported target,
+and the campaign frame index has to stay hoisted. Breaking either fails
+silently rather than loudly.
+
+Verified on a physical device and an emulator, in both modes, with animations
+on and off — not just compiled.
 
 **Placeholder debt:** `ImagePlate.tone` alternates two near-identical fills purely
 so adjacent plates are distinguishable while there is no photography. It is a
