@@ -41,13 +41,22 @@ import com.perspective.app.ui.theme.Space
 @Composable
 fun EditorialCards(
     cards: List<Pair<String, String>>,
-    onCard: (String) -> Unit,
+    /**
+     * Null until there is somewhere for a card to go.
+     *
+     * These were wrapped in a clickable that called an empty lambda: three
+     * screen-tall cards on the front page that took a press and did nothing,
+     * and three unactionable stops for a screen reader. The campaign banner
+     * and the onboarding control both state the rule this broke — a control
+     * that cannot do what it says is worse than an absent one.
+     */
+    onCard: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         cards.forEachIndexed { index, (label, image) ->
             if (index > 0) Spacer(Modifier.height(Space.GridGapVertical))
-            Box(modifier = Modifier.clickable { onCard(label) }) {
+            Box(modifier = if (onCard != null) Modifier.clickable { onCard(label) } else Modifier) {
                 ImagePlate(model = image, ratio = Ratio.Banner)
                 Box(
                     modifier = Modifier

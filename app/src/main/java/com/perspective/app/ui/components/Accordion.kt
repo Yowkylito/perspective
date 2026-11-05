@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import com.perspective.app.ui.theme.Motion
@@ -35,7 +36,9 @@ fun Accordion(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    var open by remember { mutableStateOf(false) }
+    // Saveable: rotating with a section open used to close it, which on the
+    // licences screen means losing your place in four kilobytes of text.
+    var open by rememberSaveable { mutableStateOf(false) }
 
     Column(modifier = modifier.animateContentSize(animationSpec = Motion.standard())) {
         HorizontalDivider(

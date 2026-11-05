@@ -3,7 +3,6 @@ package com.perspective.app.ui.onboarding
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.view.HapticFeedbackConstants
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -139,7 +138,6 @@ fun OnboardingScreen(
 ) {
     val frames = MockImages.banners
     if (frames.isEmpty()) return
-    val view = LocalView.current
     val current by rememberUpdatedState(frame)
     val enter by rememberUpdatedState(onEnter)
     // Saveable: rotating inside the 120ms departure recreates the Activity, and
@@ -258,15 +256,7 @@ fun OnboardingScreen(
                     // alpha 0 it is still hit-testable and still a focus stop.
                     // It has also genuinely stopped being available.
                     enabled = !leaving,
-                    onClick = {
-                        // One tick, on the one press in the app that commits to
-                        // anything. It is not in PerspectiveButton: two of the
-                        // three call sites are wired to no-ops, and giving a
-                        // button that does nothing a hardware confirmation is
-                        // the component lying on the app's behalf.
-                        view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
-                        leaving = true
-                    },
+                    onClick = { leaving = true },
                     ink = Ivory,
                     modifier = Modifier.fillMaxWidth(),
                 )

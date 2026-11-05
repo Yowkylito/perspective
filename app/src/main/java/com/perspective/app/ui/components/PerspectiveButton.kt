@@ -1,5 +1,6 @@
 package com.perspective.app.ui.components
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -23,6 +24,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp as lerpColor
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.perspective.app.ui.theme.Ink
@@ -76,6 +78,21 @@ private const val Quiet = 0.10f
  * it lasted 40ms or 4 seconds. The source buffers 16 interactions, so nothing
  * is dropped while this is mid-animation.
  *
+ * **It ticks once, on every press.** A single
+ * [HapticFeedbackConstants.VIRTUAL_KEY] — the primary-press constant.
+ * CONTEXT_CLICK, which this used first, is documented for a secondary or
+ * long press and some haptic engines map it to a noticeably different effect.
+ * The purpose is the fill's purpose reaching a second sense, which is what
+ * makes a screen event read as having a physical cause; one tick, never a
+ * pattern, because a buzz with rhythm is playful and that is a different
+ * brand. The framework constant rather than Compose's vocabulary is
+ * incidental — either works here.
+ *
+ * It lived at the one call site that committed to anything while two of the
+ * three were wired to no-ops, since a hardware confirmation for a button that
+ * does nothing is the component lying on the app's behalf. Every call site now
+ * does something, so it belongs here, where it cannot be forgotten.
+ *
  * Focus and hover get the same fill at [Quiet]. `indication = null` removed the
  * ripple's state layers along with the ripple, and a control that cannot be
  * seen to have focus is a real defect on a keyboard or in DeX, where this is
@@ -89,6 +106,7 @@ fun PerspectiveButton(
     enabled: Boolean = true,
     ink: Color = MaterialTheme.colorScheme.onBackground,
 ) {
+    val view = LocalView.current
     val interactions = remember { MutableInteractionSource() }
     val level = remember { Animatable(0f) }
 
@@ -149,8 +167,10 @@ fun PerspectiveButton(
                 indication = null,
                 enabled = enabled,
                 role = Role.Button,
-                onClick = onClick,
-            ),
+            ) {
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                onClick()
+            },
         contentAlignment = Alignment.Center,
     ) {
         Label(

@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -23,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,9 +32,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.TextFieldValue
 import com.perspective.app.data.Category
+import kotlinx.coroutines.launch
 import com.perspective.app.data.MockImages
 import com.perspective.app.data.Product
 import com.perspective.app.data.SampleCatalogue
@@ -62,6 +67,7 @@ private const val CollageAfter = 4
 fun ProductWallScreen(
     onProductClick: (Product) -> Unit,
     onLicences: () -> Unit,
+    onAccount: () -> Unit,
     onBag: () -> Unit,
     modifier: Modifier = Modifier,
     initialCampaignFrame: Int = 0,
@@ -71,6 +77,20 @@ fun ProductWallScreen(
     }
     var tab by rememberSaveable { mutableStateOf(0) }
     val grid = rememberLazyGridState()
+    val scope = rememberCoroutineScope()
+
+    // Narrowing the catalogue puts you at the top of the result.
+    //
+    // Done on the press rather than in an effect keyed on the filter, because
+    // an effect also fires when this screen is rebuilt on the way back from a
+    // product -- which would throw away the scroll position the grid just
+    // restored, every time.
+    //
+    // Without it, choosing a category removes the banner, the mosaic, the
+    // featured cards and the collage, roughly 2,500dp of editorial, while the
+    // grid keeps its index and offset: you ask to see Trousers and land near
+    // the footer of a list you have never seen the top of.
+    val showFromTop: () -> Unit = { scope.launch { grid.scrollToItem(0) } }
 
     val tabs = remember { listOf(ALL_TAB) + Category.entries.map { it.label } }
 
@@ -128,6 +148,7 @@ fun ProductWallScreen(
                             },
                             onSelect = { chosen ->
                                 tab = tabs.indexOf(chosen.label).coerceAtLeast(0)
+                                showFromTop()
                             },
                         )
                     }
@@ -140,7 +161,7 @@ fun ProductWallScreen(
                         SectionHeading("FEATURED")
                         EditorialCards(
                             cards = MockImages.featured,
-                            onCard = {},
+                            onCard = null,
                         )
                     }
                 }
@@ -183,6 +204,22 @@ fun ProductWallScreen(
             }
 
             // The storefront's only non-catalogue destination. A footer is
+            // Before the footer, not after it. Declared last, this rendered
+            // BELOW the wordmark and the licences link -- the message telling
+            // you there is nothing here sat past the end of the page.
+            if (items.isEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }, key = "empty") {
+                    Text(
+                        text = "Nothing here under that name.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Space.Gutter),
+                    )
+                }
+            }
+
             // where the reference storefronts put this sort of thing, and it
             // keeps the header free -- the bar already carries brand, search
             // and bag, and a fourth control there would be one too many.
@@ -200,35 +237,26 @@ fun ProductWallScreen(
                     Spacer(Modifier.height(Space.Xl))
                     Wordmark(style = MaterialTheme.typography.labelSmall, tracking = 2.dp)
                     Spacer(Modifier.height(Space.Lg))
-                    Text(
-                        text = "LICENCES",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.clickable(onClick = onLicences),
-                    )
+                    // The account lives here rather than in the bar, and
+                    // that is the bar's own rule being kept: it already
+                    // carries brand, search and bag, and a fourth control
+                    // there would be one too many. The footer is where the
+                    // reference storefronts put the same thing.
+                    Row(horizontalArrangement = Arrangement.spacedBy(Space.Lg)) {
+                        FooterWord(text = "ACCOUNT", onClick = onAccount)
+                        FooterWord(text = "LICENCES", onClick = onLicences)
+                    }
                 }
             }
 
-            if (items.isEmpty()) {
-                item(span = { GridItemSpan(maxLineSpan) }, key = "empty") {
-                    Text(
-                        text = "Nothing here under that name.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Space.Gutter),
-                    )
-                }
-            }
         }
 
         StorefrontHeader(
             query = query,
-            onQuery = { query = it },
+            onQuery = { query = it; showFromTop() },
             tabs = tabs,
             selected = tab,
-            onSelect = { tab = it },
+            onSelect = { tab = it; showFromTop() },
             scrolled = scrolled,
             onBag = onBag,
             modifier = Modifier.align(Alignment.TopCenter),
@@ -252,4 +280,26 @@ private fun SectionHeading(text: String, top: androidx.compose.ui.unit.Dp = Spac
         style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.padding(start = Space.Gutter, end = Space.Gutter, top = top, bottom = Space.Md),
     )
+}
+
+/**
+ * A footer word, pressable.
+ *
+ * Same reason as the chrome's words: a bare clickable Text is about 16dp of hit
+ * area against the 48dp Android asks for, and announces without a role.
+ */
+@Composable
+private fun FooterWord(text: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .heightIn(min = Space.TouchTarget)
+            .clickable(onClick = onClick, role = Role.Button),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }

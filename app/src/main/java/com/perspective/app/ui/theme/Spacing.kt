@@ -13,6 +13,16 @@ import androidx.compose.ui.unit.dp
 object Space {
     val Hairline = 1.dp
 
+    /**
+     * The smallest anything you press may be.
+     *
+     * The chrome is words rather than buttons, and a bare Text takes its hit
+     * area from its own glyphs — about 16dp tall at labelSmall, against the
+     * 48dp Android asks for. Material components apply this for you; nothing
+     * here is a Material component.
+     */
+    val TouchTarget = 48.dp
+
     val Xs = 4.dp
     val Sm = 8.dp
     val Md = 16.dp

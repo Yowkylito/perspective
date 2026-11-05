@@ -1,6 +1,7 @@
 package com.perspective.app.ui.product
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,9 +20,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextDecoration
+import com.perspective.app.data.Bag
 import com.perspective.app.data.Product
 import com.perspective.app.data.SizeOption
 import com.perspective.app.data.asPrice
@@ -50,14 +55,50 @@ import com.perspective.app.ui.theme.Space
  *
  * Note what is deliberately absent: no thumbnail strip under the pager, no
  * rating, no review count, no "only N left", no badge, no wishlist heart.
+ *
+ * The CTA is the one press on this screen that changes anything, and what it
+ * changes is [Bag] — read and written here rather than hoisted into a callback.
+ * The bag is a singleton of snapshot state, so a parameter would only be this
+ * screen asking its caller to call the same object back, and every caller would
+ * write the same line.
  */
 @Composable
 fun ProductDetailScreen(
     product: Product,
     modifier: Modifier = Modifier,
 ) {
-    var selected by remember { mutableStateOf<String?>(null) }
+    // Saveable now that the choice leads to a purchase: rotating used to put
+    // the control back to SELECT A SIZE and quietly undo the decision.
+    var selected by rememberSaveable { mutableStateOf<String?>(null) }
     val pager = rememberPagerState { product.imageCount }
+
+    // The size the confirmation belongs to, and a count of adds. The size is
+    // held rather than a bare flag because the confirmation is about what went
+    // into the bag, not about the button: choose a different size and ADDED is
+    // no longer true of what is selected, so the label goes back without
+    // waiting for the beat to end. The count is what lets a second add of the
+    // SAME size restart the beat -- the size alone does not change, so an
+    // effect keyed on it would ride out the first press's timer.
+    var confirming by remember { mutableStateOf<String?>(null) }
+    var adds by remember { mutableIntStateOf(0) }
+
+    // Nothing reads [beat]. It is a pause with the platform's animation scale
+    // applied to it, which is the one thing `delay` cannot be -- the defect
+    // BrandMoment and OnboardingScreen both document from the other side: with
+    // animations off the tweens snap while a schedule keeps its full length. A
+    // delayed reset would strand ADDED on the button long after the crossfade
+    // that gives it meaning had stopped happening. Driven this way it collapses
+    // to nothing when there is no animation to carry it, which is the right
+    // reading rather than a degraded one: one frame of a changed word is a
+    // glitch, not a confirmation, and the count in the chrome is what actually
+    // records that the bag took it.
+    val beat = remember { Animatable(0f) }
+    LaunchedEffect(adds) {
+        if (adds == 0) return@LaunchedEffect
+        beat.snapTo(0f)
+        beat.animateTo(1f, Motion.standard())
+        confirming = null
+    }
 
     Column(
         modifier = modifier
@@ -111,9 +152,30 @@ fun ProductDetailScreen(
             )
 
             Spacer(Modifier.height(Space.Lg))
+            // ADDED is a beat the control passes through, not a state it
+            // settles into, and it does not disable the button on the way. The
+            // bag takes another of the same size as a second piece, so the
+            // control has to come back and say it can be pressed again; parking
+            // on ADDED would make the CTA a readout of the bag, which is the
+            // bag's own screen's job.
             PerspectiveButton(
-                label = if (selected == null) "SELECT A SIZE" else "ADD TO BAG",
-                onClick = {},
+                label = when {
+                    selected == null -> "SELECT A SIZE"
+                    confirming == selected -> "ADDED"
+                    else -> "ADD TO BAG"
+                },
+                onClick = {
+                    selected?.let { size ->
+                        // Only confirms what actually went in. Bag.add stops at
+                        // nine of one line and says so; saying ADDED anyway
+                        // would be the button claiming a press it dropped, and
+                        // the chrome count does not move to contradict it.
+                        if (Bag.add(product, size)) {
+                            confirming = size
+                            adds++
+                        }
+                    }
+                },
                 enabled = selected != null,
             )
 

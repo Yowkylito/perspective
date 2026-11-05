@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -26,10 +28,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.perspective.app.data.Bag
 import com.perspective.app.ui.brand.Wordmark
 import com.perspective.app.ui.brandWordmark
 import com.perspective.app.ui.theme.Motion
@@ -38,6 +45,18 @@ import com.perspective.app.ui.theme.Space
 /** Bar heights. The wall pads its content by their sum so nothing starts underneath. */
 val HeaderBarHeight = 56.dp
 val HeaderTabsHeight = 44.dp
+
+/**
+ * The slot the bag label sits in, whatever it currently says.
+ *
+ * The search field takes the remaining width, so without a reserved slot
+ * putting the first thing in the bag visibly shrinks the search box and taking
+ * the last one out grows it back — the count is worth having, a search field
+ * that twitches when you shop is not. Courier Prime advances 0.600em with
+ * 0.10em of tracking at labelSmall's 12sp, so "BAG (9)" measures about 59dp.
+ */
+private val BagSlot = 60.dp
+
 
 /**
  * How much of the ground the header keeps once content is passing beneath it.
@@ -133,11 +152,28 @@ fun StorefrontHeader(
                 modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(Space.Sm + Space.Xs))
-            Text(
-                text = "BAG",
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier.clickable(onClick = onBag),
-            )
+            // The word sits in a reserved slot and the slot is what you
+            // press: a bare Text takes its hit area from its own glyphs, which
+            // at labelSmall is about 16dp tall against a 48dp minimum.
+            Box(
+                modifier = Modifier
+                    .widthIn(min = BagSlot)
+                    .heightIn(min = Space.TouchTarget)
+                    .clickable(onClick = onBag, role = Role.Button),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Text(
+                    // The count is the only place adding to the bag is visible
+                    // from the catalogue, so without it the press has no
+                    // consequence you can see. A parenthetical rather than a
+                    // badge: a filled circle with a number in it is the one
+                    // piece of mainstream-retail chrome this bar does not
+                    // carry, and the brand is typographic -- the word already
+                    // says what it is.
+                    text = if (Bag.count > 0) "BAG (${Bag.count})" else "BAG",
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
         }
 
         CategoryTabs(tabs = tabs, selected = selected, onSelect = onSelect)
@@ -180,7 +216,12 @@ private fun SearchField(
                 MaterialTheme.typography.labelSmall.copy(color = scheme.onBackground),
             ),
             cursorBrush = androidx.compose.ui.graphics.SolidColor(scheme.onBackground),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                // The SEARCH placeholder is a sibling node and it disappears
+                // the moment anything is typed, so without this the field has
+                // no name at all. Same fix the sign-in field already carries.
+                .semantics { contentDescription = "Search" },
         )
     }
 }
@@ -225,7 +266,14 @@ private fun CategoryTabs(
             Box(
                 modifier = Modifier
                     .height(HeaderTabsHeight)
-                    .clickable { onSelect(index) },
+                    // The underline says which tab is active, and an underline
+                    // is not something a screen reader can read. selectable
+                    // carries the same fact into the semantics tree.
+                    .selectable(
+                        selected = active,
+                        role = Role.Tab,
+                        onClick = { onSelect(index) },
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(text = label, style = MaterialTheme.typography.labelSmall, color = ink)

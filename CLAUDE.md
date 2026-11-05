@@ -186,9 +186,16 @@ What is present, and what each one earns its place by doing:
   screen for the crossing to shove aside.
 - **Nav crossfade.** Non-shared content gets out of the travelling image's way.
 - **Size rule fade-in.** Marks which size the tap landed on.
-- **CTA press fill.** The rule fills and the label inverts. Confirms the press
-  landed; flat and square because a ripple is a Material gesture in an interface
-  that speaks no other Material.
+- **CTA press fill, and one haptic tick.** The rule fills and the label inverts.
+  Confirms the press landed; flat and square because a ripple is a Material
+  gesture in an interface that speaks no other Material. The tick is the same
+  confirmation reaching a second sense. It sat at a single call site while two
+  of the three were wired to no-ops — a hardware confirmation for a button that
+  does nothing is the component lying on the app's behalf — and moved into
+  `PerspectiveButton` once every call site committed to something.
+- **ADDED on the product CTA.** The label says the press did what it said, then
+  gives the control back. It belongs to the size that was added, so changing
+  size reverts it on the same frame.
 - **CTA label crossfade.** The label changes meaning; a hard swap reads as a glitch.
 - **Accordion expansion.** Shows that content came from the row you pressed.
 
@@ -265,7 +272,8 @@ and check the result against the geometry above.
 
 ## Status
 
-Brand system complete and a working two-screen scaffold on top of it.
+Brand system complete, with a storefront on it that can be shopped end to
+end: browse, choose a size, fill a bag, sign in, order.
 
 - `ui/catalog/ProductWallScreen` — 2 columns, zero gutter, 40dp row gap,
   full-bleed 2:3 plates, label inset 12dp.
@@ -273,11 +281,43 @@ Brand system complete and a working two-screen scaffold on top of it.
   and price on one row, inline sizes with strike-through plus grey on
   unavailable, square outlined CTA, accordions.
 - `ui/PerspectiveApp` — 56dp chrome carrying the wordmark, word labels instead
-  of icons, NavHost between wall and detail.
+  of icons, and a NavHost over seven destinations: onboarding, wall, product,
+  bag, sign-in, account and order.
 - `ui/onboarding/OnboardingScreen` — full-bleed photography behind a graded
   scrim, one line of copy, one control. Light system-bar icons while it is up,
   because it is a photograph and the theme's own choice tracks a ground that is
   not there.
+- `ui/bag/BagScreen` — live lines with a typographic quantity stepper and a
+  REMOVE word, totals at body weight, and its own empty state.
+- `ui/account/` — passwordless sign-in, the account with its order history, and
+  the order confirmation, which doubles as the view of an older order.
+
+**The bag and the session are in memory and that is the honest size of them.**
+`data/Bag` and `data/Session` are singletons holding snapshot state: they
+outlive the composition, so rotation keeps them, and they do not outlive the
+process, so a cold start opens an empty bag and a signed-out session. Making
+either durable means somewhere to persist and an owner with a lifecycle, which
+are decisions about dependencies this app has not taken — see the three it
+runs on. Until it does, the small version that cannot pretend to be more is the
+right one.
+
+**No password, deliberately.** There is no backend, so a password field would
+ask for a secret nothing can check and nothing should keep. That is security
+theatre, and it would make the sign-in the one screen in the app that lies
+about what it does.
+
+**There is no checkout step and no payment.** CHECKOUT places the order
+directly: nothing takes an address, calculates shipping or moves money, and the
+bag screen shows one Total rather than a subtotal and a shipping line, because
+a subtotal is only a subtotal of something. Orders are filed under the address,
+so signing out hides them and signing back in with the same one finds them
+again. Numbers run `PS-4417` upward in sequence, and a line stops at nine —
+`Bag.MaxQuantity`, which the stepper reads so that `+` can visibly stop rather
+than going quiet under the thumb.
+
+**The account is in the footer, not the bar.** The bar already carries brand,
+search and bag, and its own rule says a fourth control there would be one too
+many. The footer is where the storefronts measured put the same thing.
 
 **The first run is one continuous gesture, not three screens.** The mark
 assembles, sets itself down on the onboarding block, and later rises into the
@@ -288,7 +328,13 @@ and the campaign frame index has to stay hoisted. Breaking either fails
 silently rather than loudly.
 
 Verified on a physical device and an emulator, in both modes, with animations
-on and off — not just compiled.
+on and off — not just compiled. The shopping flow was walked end to end: add
+two sizes, change a quantity, sign in at checkout, place the order, read it
+back from the history, sign out and back in. Walked again at
+`animator_duration_scale 0`, because the bag's removal is built on the
+transition settling and that is the setting which makes it settle instantly,
+and again at `10`, which is where a model that lagged its own animation was
+caught placing an order for a line that had been removed.
 
 **Placeholder debt:** `ImagePlate.tone` alternates two near-identical fills purely
 so adjacent plates are distinguishable while there is no photography. It is a

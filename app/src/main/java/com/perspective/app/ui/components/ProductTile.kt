@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import com.perspective.app.data.Product
@@ -36,7 +37,7 @@ fun ProductTile(
 ) {
     Column(
         modifier = modifier
-            .clickable(onClick = onClick)
+            .clickable(onClick = onClick, role = Role.Button)
             .clearAndSetSemantics {
                 contentDescription = "${product.name}, ${product.price.asPrice()}"
             },
