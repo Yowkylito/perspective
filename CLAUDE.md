@@ -219,15 +219,17 @@ minSdk 26, so `mipmap-anydpi-v26` covers every device and there are no legacy PN
 density buckets to maintain.
 
 The Play listing's flat 512x512 PNG lives at `store/play-icon-512.png`, which an
-adaptive icon cannot supply. It is **generated from the same paths, never
-redrawn** — `tools/vd2png.py` reads `ic_launcher_foreground.xml` itself, so the
-store tile and the launcher icon cannot drift. Regenerate rather than edit:
+adaptive icon cannot supply. It was **rasterised from `ic_launcher_foreground.xml`
+itself, never redrawn**, so the store tile and the launcher icon agree: nonzero
+winding fill, 4x supersampled, with the 108dp viewport cropped to the 72dp the
+launcher mask actually reveals before scaling, so the mark carries the same
+weight on a store tile as on a home screen.
 
-    python3 tools/vd2png.py app/src/main/res/drawable/ic_launcher_foreground.xml store/play-icon-512.png
-
-The 108dp viewport is cropped to the 72dp the launcher mask actually reveals
-before scaling, so the mark carries the same weight on a store tile as on a
-home screen.
+**This repository stays Kotlin and Android.** The rasteriser that produced the
+PNG is deliberately NOT checked in — a one-off store asset does not justify a
+second toolchain in a project that runs on three dependencies. If the launcher
+vector ever changes, regenerate the PNG from it rather than editing the PNG,
+and check the result against the geometry above.
 
 ## Status
 
