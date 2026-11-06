@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.perspective.app.ui.BottomNavSpace
 import com.perspective.app.data.Bag
 import com.perspective.app.data.BagLine
 import com.perspective.app.data.Session
@@ -241,7 +242,9 @@ fun BagScreen(
                 )
             }
         }
-        Spacer(Modifier.height(Space.Xxl))
+        // The page's own end margin plus the floating bar's, since this is a
+        // tab and the pill is drawn over it.
+        Spacer(Modifier.height(Space.Xxl + BottomNavSpace))
     }
 }
 

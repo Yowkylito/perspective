@@ -46,17 +46,6 @@ import com.perspective.app.ui.theme.Space
 val HeaderBarHeight = 56.dp
 val HeaderTabsHeight = 44.dp
 
-/**
- * The slot the bag label sits in, whatever it currently says.
- *
- * The search field takes the remaining width, so without a reserved slot
- * putting the first thing in the bag visibly shrinks the search box and taking
- * the last one out grows it back — the count is worth having, a search field
- * that twitches when you shop is not. Courier Prime advances 0.600em with
- * 0.10em of tracking at labelSmall's 12sp, so "BAG (9)" measures about 59dp.
- */
-private val BagSlot = 60.dp
-
 
 /**
  * How much of the ground the header keeps once content is passing beneath it.
@@ -98,7 +87,6 @@ fun StorefrontHeader(
     selected: Int,
     onSelect: (Int) -> Unit,
     scrolled: Boolean,
-    onBag: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -151,29 +139,6 @@ fun StorefrontHeader(
                 onValue = onQuery,
                 modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.width(Space.Sm + Space.Xs))
-            // The word sits in a reserved slot and the slot is what you
-            // press: a bare Text takes its hit area from its own glyphs, which
-            // at labelSmall is about 16dp tall against a 48dp minimum.
-            Box(
-                modifier = Modifier
-                    .widthIn(min = BagSlot)
-                    .heightIn(min = Space.TouchTarget)
-                    .clickable(onClick = onBag, role = Role.Button),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Text(
-                    // The count is the only place adding to the bag is visible
-                    // from the catalogue, so without it the press has no
-                    // consequence you can see. A parenthetical rather than a
-                    // badge: a filled circle with a number in it is the one
-                    // piece of mainstream-retail chrome this bar does not
-                    // carry, and the brand is typographic -- the word already
-                    // says what it is.
-                    text = if (Bag.count > 0) "BAG (${Bag.count})" else "BAG",
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
         }
 
         CategoryTabs(tabs = tabs, selected = selected, onSelect = onSelect)

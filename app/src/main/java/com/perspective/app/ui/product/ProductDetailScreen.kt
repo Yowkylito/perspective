@@ -2,6 +2,7 @@ package com.perspective.app.ui.product
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +48,32 @@ import com.perspective.app.ui.theme.Ratio
 import com.perspective.app.ui.theme.Space
 
 /**
+ * How long ADDED holds on the CTA before the control hands itself back.
+ *
+ * A dwell, not an animation: for most of its length nothing is moving, so the
+ * 120-360ms band does not govern this figure — it governs the crossfade at
+ * either end of it. That is why this is a bare number rather than a [Motion]
+ * token, and `OnboardingScreen`'s frame hold draws the same line from the
+ * other side.
+ *
+ * The arithmetic, from the press, with the label crossfade at [Motion.Quick]
+ * (240ms) in both directions: 240 fading in, 760 at full opacity, 240 fading
+ * out. The word is on the control for 1240ms and holding still for 760 of
+ * them, and it is the 760 this figure is chosen for.
+ *
+ * At [Motion.Standard] that middle number was 80ms. The word reached full
+ * opacity and immediately began leaving again — a flicker rather than anything
+ * anyone read, and a confirmation nobody reads is not one. 760ms is also long
+ * enough to survive the eye going to the bag count in the chrome, which
+ * increments on the same frame, and coming back.
+ *
+ * Nothing is blocked while it runs, which is what lets it be this long: the
+ * control stays pressable, and pressing it again restarts the dwell rather
+ * than queueing behind it.
+ */
+private const val ConfirmationMs = 1000
+
+/**
  * Product detail.
  *
  * Order is measured, not invented: full-bleed image pager first, then name and
@@ -82,21 +109,24 @@ fun ProductDetailScreen(
     var confirming by remember { mutableStateOf<String?>(null) }
     var adds by remember { mutableIntStateOf(0) }
 
-    // Nothing reads [beat]. It is a pause with the platform's animation scale
-    // applied to it, which is the one thing `delay` cannot be -- the defect
-    // BrandMoment and OnboardingScreen both document from the other side: with
-    // animations off the tweens snap while a schedule keeps its full length. A
-    // delayed reset would strand ADDED on the button long after the crossfade
-    // that gives it meaning had stopped happening. Driven this way it collapses
-    // to nothing when there is no animation to carry it, which is the right
-    // reading rather than a degraded one: one frame of a changed word is a
-    // glitch, not a confirmation, and the count in the chrome is what actually
-    // records that the bag took it.
+    // Nothing reads [beat], and only its duration is load-bearing -- hence no
+    // easing, which would be shaping a number no frame consumes. It is a pause
+    // with the platform's animation scale applied to it, and that is the one
+    // thing `delay` cannot be: the defect BrandMoment and OnboardingScreen both
+    // document from the other side, where with animations off the tweens snap
+    // while a schedule keeps its full length. A delayed reset would strand
+    // ADDED on the button for the best part of a second after the crossfade
+    // that gives it meaning had stopped happening -- and the longer the dwell,
+    // the longer that stranding, so lengthening it is exactly the change that
+    // would have made a `delay` worse. Driven this way the no-animation case
+    // collapses to nothing, which is the right reading rather than a degraded
+    // one: one frame of a changed word is a glitch, not a confirmation, and the
+    // count in the chrome is what actually records that the bag took it.
     val beat = remember { Animatable(0f) }
     LaunchedEffect(adds) {
         if (adds == 0) return@LaunchedEffect
         beat.snapTo(0f)
-        beat.animateTo(1f, Motion.standard())
+        beat.animateTo(1f, tween(ConfirmationMs))
         confirming = null
     }
 

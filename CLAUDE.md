@@ -51,9 +51,16 @@ not emphasised.
 
 **Nike is reference, not template.** Its restraint is worth learning from; its
 layout is not to be reproduced. Specifically avoid: its 1:1 grid tiles, its
-title-above-hero PDP order, its 4:5 hero ratio, its five-icon bottom bar, and any
-of its copy strings. Where a decision could go either way, take the one that
-differs.
+title-above-hero PDP order, its 4:5 hero ratio, and any of its copy strings.
+Where a decision could go either way, take the one that differs.
+
+**The one exception, and it is an instruction rather than a drift.** The bottom
+bar IS copied from Nike's, five icons and all, measured off a recording of the
+original. That rule said to avoid exactly this; the owner overruled it twice,
+explicitly, which is his to do. See Navigation. What is still not copied is
+Nike's trademark: its Shop tab carries a swoosh and `NavIcons` draws a garment
+tag instead. A brand's rules can be waived by the person who wrote them; a
+brand's trademark cannot.
 
 ## Toolchain
 
@@ -140,14 +147,17 @@ rendered text returned an empty match on The Row and TOTEME, against Free
 Shipping / Just In x3 / Best Seller / Sale on Nike. Wishlist hearts are the one
 safe optional.
 
-**Open question, deliberately unanswered:** every site measured is a website, so
-there is no verified evidence on whether boutique *apps* avoid bottom tab bars.
-Treat drawer-vs-tabs as undecided rather than settled.
+**Answered, by growth rather than by evidence:** there is still no measurement
+on whether boutique *apps* avoid bottom tab bars — every site measured is a
+website and cannot have one. What changed is this app. It has seven
+destinations, three of which you return to rather than pass through, and the
+Status section already named a tab bar as the first thing to revisit once that
+happened. So there is one. See Navigation.
 
 ## Motion
 
 Premium motion is precise and confident; luxurious motion is slow and languid.
-Everything sits in a 120-360ms band on Material 3's emphasized curves, decelerates
+Everything sits in a 160-400ms band on Material 3's emphasized curves, decelerates
 into rest, and never bounces. **No springs with visible overshoot** — that reads
 playful, which is a different brand.
 
@@ -169,8 +179,8 @@ What is present, and what each one earns its place by doing:
 - **Shared element, wall -> detail.** Shows that the thing you tapped became the
   thing you are looking at; without it the navigation is a cut and the eye has
   to find the product again.
-- **Shared element, onboarding -> wall.** The campaign photograph contracts from
-  full bleed into the banner at the head of the wall. Both ends draw from
+- **Shared element, onboarding -> shop.** The campaign photograph contracts from
+  full bleed into the banner at the head of the shop. Both ends draw from
   `MockImages.banners`, so there is a real object to follow across the boundary
   rather than an invented one — which is what makes the two screens read as one
   place instead of a cut between strangers. The frame index is hoisted into
@@ -228,6 +238,102 @@ capital H, `ResizeMode.ScaleToBounds` with a capital S. The live developer.andro
 reference documents 1.12/1.13 and **will not compile here**. Check the version
 before copying a sample.
 
+## Navigation
+
+**The bottom bar is Nike's, copied rather than interpreted**, on instruction —
+see the exception under Rules. An earlier version abstracted it into this
+brand's own vocabulary: a flat full-width bar of tracked mono words with a
+hairline underline. It was rejected, correctly, as far from the thing it was
+meant to be.
+
+Geometry is measured from a recording of the original, not estimated. At that
+device's scale the pill spans 624 of 720 pixels and stands 115 tall: 312dp
+wide, 24dp in from each edge, 58dp high. Its corners are ENDS — radius is half
+the height — so `CircleShape` is literally correct and a RoundedCornerShape
+with a number in it would approximate something exact.
+
+**It floats.** Inset from both edges, lifted clear of the gesture bar, with
+content running underneath. That is why `PerspectiveApp` draws it in a Box over
+the NavHost rather than a Column beside it, and why scrolling tabs clear it with
+`BottomNavSpace`. A bar reaching the screen edges is the thing that read wrong.
+
+**Five tabs: Home, Shop, Search, Bag, Profile.** Icons above sentence-case
+labels in the detail face — not the tracked capitals the rest of the chrome
+uses, because the reference sets them that way. Selected is a change of weight,
+not colour: the icon swaps outline for solid and the label goes medium. No
+underline, no pill behind the selected tab, no accent. The bag carries a filled
+disc with its count, overlapping the icon's top-right.
+
+**Icons are drawn in code** (`ui/NavIcons.kt`), not shipped as assets — the same
+reason the wordmark is. Ten vectors on one 19-unit optical grid, outline and
+solid for each, so selecting fills a mark in without resizing it.
+
+**Dark mode lifts the pill by value, not by shadow — and grades it.** A shadow
+cannot lift a black pill off a black ground. Measured, the reference runs
+`#1E1E20` at its top edge to `#151515` at its bottom, about nine points, so the
+surface reads as catching light from above rather than as a cut-out. This one
+runs about fifteen, deliberately harder: it sits on true black where the
+reference's page is `#090B11`, so it has further to climb.
+
+Both stops come off the dark neutrals that already existed — the top a fifth of
+the way from `Night10` toward `Night35`, the bottom `Night10` itself. The bottom
+edge therefore stays 26 points clear of the page and the pill never merges into
+the ground it is meant to float over, and no hue was added to achieve it, only a
+value on the axis that was already there.
+
+Light mode is the opposite case: the page is already the brightest surface the
+brand has, so there the pill is flat, shares the page's ground, and the shadow
+does the lifting. This is the only gradient in the app that is not a
+photographic scrim.
+
+**The app lands on Shop, not Home, and Shop is the only screen with chrome over
+it.** Onboarding hands straight to the Shop tab; Home still leads the bar,
+because the bar's order is the reference's and where the app lands is a
+separate decision. The storefront header and the campaign banner moved with the
+landing rather than staying on the wall, and they had to: the header carries
+`brandWordmark()` and the banner carries `campaignFrame()`, which are the
+receiving ends of both crossings out of onboarding. A shared element whose
+other end sits on a screen nobody navigated to degrades to nothing without
+complaining. Home is the other half of that split — no bar, no tabs, no search,
+no filter, status-bar padding instead of an overlay, and one page that runs
+from the editorial to the end of the catalogue.
+
+**Tab switching is deliberately dumb: `popUpTo(RouteShop) { inclusive = false }`
+and nothing else.** No `saveState`, no `restoreState`. Those two were there to
+keep each tab's place, and on a flat graph they cannot do it safely: `popUpTo`
+saves everything above the anchor as ONE block keyed by the first entry it
+popped, and the next navigate matching that key replays the whole block rather
+than its root. The bag is the case that breaks — it is a tab AND a screen
+pushed from the product's chrome, so the block can span two tabs. Four taps on
+a device, no race and no unusual state: from Home open a product, open the bag
+from its chrome, press HOME, and the bag is what comes back, with Bag lit in
+the bar.
+
+Without the two flags the stack states itself in one line — `[shop]`, or
+`[shop, tab]`, with whatever you have opened sitting above it — and a tab press
+lands on that tab and nothing else. A press on the tab you are already on does
+nothing, rather than rebuilding the same screen and replaying its fade.
+
+Popped to the shop rather than to the graph's start, because the start is
+onboarding and onboarding leaves the stack the moment the shop opens; popping
+to an entry that is not there would stack a tab on every press.
+
+What that costs is the saved place, and the one worth keeping is hoisted
+instead. Home's `LazyGridState` lives in `PerspectiveApp`, above the NavHost:
+Home is the long page, and losing your place in the catalogue every time you
+look in the bag is the bar undoing your work. The shop needs no equivalent — it
+is the anchor, it is never popped, and its category, its query and its scroll
+sit in its entry untouched. Search, the bag and the account start fresh, which
+is what each of the three is for; a search is a question you ask now, not one
+you left half-asked on another tab.
+
+Absent on onboarding, product, sign-in and order, which is what keeps the
+onboarding photograph full bleed and the product pager edge to edge.
+
+Three things it replaced rather than joined: the account link in the wall's
+footer, the BAG word in the account screen's top chrome, and the BAG word in the
+storefront header. Two ways to one screen on one page is one too many.
+
 ## Icon
 
 The wordmark in its rule — the brand's actual logo, not a monogram derived from
@@ -275,14 +381,17 @@ and check the result against the geometry above.
 Brand system complete, with a storefront on it that can be shopped end to
 end: browse, choose a size, fill a bag, sign in, order.
 
-- `ui/catalog/ProductWallScreen` — 2 columns, zero gutter, 40dp row gap,
-  full-bleed 2:3 plates, label inset 12dp.
+- `ui/catalog/ProductWallScreen` — Home: nothing over it. Featured editorial,
+  then the whole catalogue at 2 columns, zero gutter, 40dp row gap, full-bleed
+  2:3 plates, label inset 12dp, footer at the end.
 - `ui/product/ProductDetailScreen` — full-bleed pager with an n/N counter, name
   and price on one row, inline sizes with strike-through plus grey on
   unavailable, square outlined CTA, accordions.
 - `ui/PerspectiveApp` — 56dp chrome carrying the wordmark, word labels instead
-  of icons, and a NavHost over seven destinations: onboarding, wall, product,
-  bag, sign-in, account and order.
+  of icons, and a NavHost over ten destinations: onboarding, shop, wall,
+  search, product, bag, sign-in, account, order and licences. The chrome is
+  only on the ones the bar does not carry. Onboarding hands to shop, and shop
+  is the anchor every tab and every return pops back to.
 - `ui/onboarding/OnboardingScreen` — full-bleed photography behind a graded
   scrim, one line of copy, one control. Light system-bar icons while it is up,
   because it is a photograph and the theme's own choice tracks a ground that is
@@ -291,6 +400,16 @@ end: browse, choose a size, fill a bag, sign in, order.
   REMOVE word, totals at body weight, and its own empty state.
 - `ui/account/` — passwordless sign-in, the account with its order history, and
   the order confirmation, which doubles as the view of an older order.
+- `ui/BottomNav` + `ui/NavIcons` — the five-tab floating pill, copied from
+  Nike's. See Navigation.
+- `ui/catalog/ShopScreen` — the landing. Storefront header over the grid —
+  wordmark, ruled search field, category tabs — then the campaign banner and
+  the category tiles, narrowing in place to a 2-column product grid. Tabs and
+  tiles set one `Category?`; the ALL tab is what widens it again, so the
+  `ALL CATEGORIES` word that used to do that is gone.
+- `ui/catalog/SearchScreen` — the ruled field over a live-filtered grid, with
+  the category tiles as a starting point before anything is typed. This one is
+  extrapolated: the recording never opens its Search tab.
 
 **The bag and the session are in memory and that is the honest size of them.**
 `data/Bag` and `data/Session` are singletons holding snapshot state: they
@@ -336,11 +455,26 @@ transition settling and that is the setting which makes it settle instantly,
 and again at `10`, which is where a model that lagged its own animation was
 caught placing an order for a line that had been removed.
 
+Moving the landing to Shop was walked separately, on a physical device in both
+modes, at `animator_duration_scale` 1 and 10: cold start into the shop, both
+crossings arriving on it rather than on a screen nobody opened, tabs narrowing
+in place, Home chrome-free with the status bar clear of the photograph, the
+empty bag's THE SHOP returning to the shop with its filter intact, and Back
+from the shop leaving the app rather than unwinding a stack of tabs. The
+emulator has not been re-checked since that change.
+
+The tab-switching change was walked the same way, and the four-tap bag
+reproduction above was run against the old flags and the new ones to be sure
+it was the flags: before, HOME opened the bag; after, HOME opens Home, still
+at the scroll position it was left at. Then every tab in a lap — Home, Bag,
+Profile, Search, Shop — with the shop's filter and Home's scroll both intact
+at the end of it. **One thing was checked and turned out not to exist:** a
+second reported defect, where pressing a tab from an open product was supposed
+to restore the wrong screen, is not reachable — the product destination has no
+bottom bar, so there is no tab to press. A first reading of it was a false
+positive from tapping where the bar is not.
+
 **Placeholder debt:** `ImagePlate.tone` alternates two near-identical fills purely
 so adjacent plates are distinguishable while there is no photography. It is a
 reviewing aid, not part of the system — delete the parameter when real images
 land.
-
-**Open:** no bottom tab bar, decided on brand grounds rather than evidence (every
-storefront measured is a website and cannot have tabs). Revisit first if the app
-grows past a couple of destinations.

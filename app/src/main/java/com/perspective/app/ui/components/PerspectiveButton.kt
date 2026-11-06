@@ -193,6 +193,25 @@ fun PerspectiveButton(
  *
  * The label changes meaning when a size is chosen. Cross-fading marks that as a
  * state change; a hard swap reads as a glitch at this size.
+ *
+ * **The same rate whichever way it goes, and that is a decision rather than a
+ * default.** A confirmation that snaps in and leaves slowly is a real pattern,
+ * and the press fill above is already built on it — [Motion.Instant] rising
+ * against [Motion.Quick] falling — because an acknowledgement has to land
+ * inside the window where it still reads as caused, while a release has
+ * nothing to acknowledge. Putting that same asymmetry on the word would say a
+ * second time, in a second element, what the fill and the haptic tick already
+ * say on the frame of the press. The purpose can be named; it is just already
+ * served, and a signal served twice is the decorative case the test catches.
+ *
+ * It is also not the knob it looks like. [Crossfade] takes one spec and runs
+ * it on both items at once, so in and out are not two settings — they are one
+ * animation playing on two labels. Varying it means varying it per label
+ * CHANGE, which means this component deciding which of the strings it is
+ * handed is a confirmation. Six screens hand it strings and it has no way to
+ * tell, so the knob would be one screen's vocabulary living in a general
+ * control. What was actually short here was the dwell on the far side of the
+ * fade, and that is where it was fixed.
  */
 @Composable
 private fun Label(label: String, inkProvider: () -> Color) {

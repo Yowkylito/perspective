@@ -15,8 +15,21 @@ import androidx.compose.animation.core.tween
  * Luxury motion is slow and languid; it asks to be admired, and it reads as the
  * interface making you wait. Premium motion is precise and confident: it moves
  * decisively, arrives settled, and gets out of the way. Everything here sits in
- * the 120-360ms band, decelerates into rest, and never bounces or overshoots. A
+ * the 160-400ms band, decelerates into rest, and never bounces or overshoots. A
  * spring with visible bounce is playful, not premium — do not add one.
+ *
+ * **The band moved up one step, and the reason was the result rather than the
+ * theory.** It was 120-360, and on device the app read as though beats were
+ * missing — a press acknowledged and gone before it registered, screens
+ * arriving without having been seen to arrive. The ceiling was not the
+ * cause: fourteen of eighteen call sites sat at Quick or below, so the band
+ * was a range the implementation never actually used. Every token moved up
+ * one step together, which keeps every relationship between them and leaves
+ * the character alone. 400ms is still not languid; 160 is still decisive.
+ *
+ * Shift them together or not at all. The relationships are load bearing —
+ * PerspectiveApp's WallTrailMs + Standard == Considered is a documented
+ * identity, and it survives only because all four moved by the same step.
  *
  * THE TEST, before adding any animation: name what it explains — a state change,
  * a spatial relationship, hierarchy, or where something came from. "It looks
@@ -30,13 +43,13 @@ import androidx.compose.animation.core.tween
  */
 object Motion {
     /** Colour and alpha changes on something already on screen. */
-    const val Instant = 120
+    const val Instant = 160
 
     /** Small state changes: selection, label swaps, control feedback. */
-    const val Quick = 200
+    const val Quick = 240
 
     /** The default. Layout changes, expansion, anything that moves an edge. */
-    const val Standard = 280
+    const val Standard = 320
 
     /**
      * Elements crossing between screens, and the onboarding frame crossfade.
@@ -46,7 +59,7 @@ object Motion {
      * screen changing frame, which is a full-bleed photograph replacing
      * another and is the only in-screen change large enough to earn it.
      */
-    const val Considered = 360
+    const val Considered = 400
 
     /**
      * Emphasized decelerate — Material 3's own curve, not an invented one.

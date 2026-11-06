@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.perspective.app.ui.BottomNavSpace
 import com.perspective.app.data.Order
 import com.perspective.app.data.Session
 import com.perspective.app.data.asPrice
@@ -117,7 +118,9 @@ fun AccountScreen(
             },
         )
 
-        Spacer(Modifier.height(Space.Xxl))
+        // The page's own end margin plus the floating bar's, since this is a
+        // tab and the pill is drawn over it.
+        Spacer(Modifier.height(Space.Xxl + BottomNavSpace))
     }
 }
 
