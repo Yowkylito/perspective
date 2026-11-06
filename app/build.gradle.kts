@@ -1,7 +1,59 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+}
+
+/**
+ * Release signing, read from outside the repository and never from inside it.
+ *
+ * Four values, taken from `keystore.properties` at the repository root if it
+ * is there, and otherwise from the environment — so a machine uses the file
+ * and a build server uses its own secret store, with no second code path.
+ * `keystore.properties` is gitignored beside `*.jks` and `*.keystore`, which
+ * were already ignored; a password in a tracked file is a password published
+ * the moment the repository is.
+ *
+ * **Absent, the build still works and says why.** Signing is configured only
+ * when all four values are present AND the keystore is really on disk, so a
+ * clone with no secrets builds debug normally and produces an unsigned
+ * release rather than failing to configure. The warning below is there
+ * because the alternative is finding out at `adb install`.
+ *
+ * See the Signing section in CLAUDE.md for the keys and how to make the key.
+ */
+private val signingProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.isFile) file.inputStream().use(::load)
+}
+
+fun signingValue(key: String, variable: String): String? =
+    (signingProperties.getProperty(key) ?: System.getenv(variable))
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+
+val releaseStorePassword = signingValue("storePassword", "PERSPECTIVE_STORE_PASSWORD")
+val releaseKeyAlias = signingValue("keyAlias", "PERSPECTIVE_KEY_ALIAS")
+val releaseKeyPassword = signingValue("keyPassword", "PERSPECTIVE_KEY_PASSWORD")
+val releaseKeystore = signingValue("storeFile", "PERSPECTIVE_STORE_FILE")
+    ?.let(rootProject::file)
+    ?.takeIf { it.isFile }
+
+val releaseSigningReady = releaseKeystore != null &&
+    releaseStorePassword != null &&
+    releaseKeyAlias != null &&
+    releaseKeyPassword != null
+
+if (!releaseSigningReady &&
+    gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
+) {
+    logger.warn(
+        "Perspective: release signing is not configured, so the release artifact will be " +
+            "UNSIGNED — Android will not install it and Play will not accept it. " +
+            "See the Signing section in CLAUDE.md.",
+    )
 }
 
 android {
@@ -17,8 +69,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseSigningReady) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // Null when the config above was not created, which is what
+            // leaves the artifact unsigned rather than failing the build.
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

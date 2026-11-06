@@ -71,6 +71,48 @@ The Gradle wrapper points at a local distribution
 (`~/MyFolders/gradle-9.1.0-all.zip`), matching the other projects in this
 workspace.
 
+## Signing
+
+Four values, and none of them lives in the repository: `storeFile`,
+`storePassword`, `keyAlias`, `keyPassword`. `app/build.gradle.kts` reads them
+from `keystore.properties` at the repository root if that file is there, and
+otherwise from `PERSPECTIVE_STORE_FILE`, `PERSPECTIVE_STORE_PASSWORD`,
+`PERSPECTIVE_KEY_ALIAS` and `PERSPECTIVE_KEY_PASSWORD` — a machine uses the
+file, a build server uses its own secret store, and there is one code path
+rather than two. `keystore.properties` is gitignored beside `*.jks` and
+`*.keystore`, which were already ignored. A password in a tracked file is a
+password published the moment the repository is.
+
+**Absent, the build still works and says why.** Signing is configured only
+when all four values are present *and* the keystore is really on disk, so a
+clone with no secrets builds debug normally and produces an unsigned release
+instead of failing to configure. Unsigned means Android will not install it
+and Play will not accept it, so any release task with signing unconfigured
+prints a warning — the alternative is finding out at `adb install`.
+
+Making the key, once:
+
+```
+keytool -genkeypair -v -keystore perspective-release.jks \
+  -alias perspective -keyalg RSA -keysize 4096 -validity 10000
+```
+
+Then `keystore.properties`, which `storeFile` resolves against the repository
+root — a key kept outside the repo takes an absolute path:
+
+```
+storeFile=perspective-release.jks
+storePassword=...
+keyAlias=perspective
+keyPassword=...
+```
+
+**Back up the .jks and its passwords somewhere that is not this machine.** An
+Android app is identified by its signing key, so a lost key is a listing that
+can no longer be updated. Play App Signing softens that — Google then holds
+the app signing key and only the upload key is yours to lose, and an upload
+key can be reset — but nothing softens losing both.
+
 ## Type
 
 Display — **Courier Prime** (400/700), confirmed as the wordmark's face. Titles,

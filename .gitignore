@@ -11,6 +11,7 @@ captures/
 *.aab
 *.jks
 *.keystore
+keystore.properties
 
 # Kotlin incremental-compilation scratch (AGP 8.10 / Kotlin 2.1)
 .kotlin/
